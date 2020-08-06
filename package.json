@@ -1,0 +1,46 @@
+{
+  "name": "chat-window",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "next dev -p 8080",
+    "build": "next build",
+    "export": "next export",
+    "deploy": "npm run build && npm run export",
+    "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "start": "next start -p 8080"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@papercups-io/chat-widget": "^1.0.6",
+    "antd": "^4.4.2",
+    "framer-motion": "^2.3.0",
+    "next": "9.4.4",
+    "phoenix": "^1.5.4",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "superagent": "^5.3.1",
+    "theme-ui": "^0.3.1",
+    "tinycolor2": "^1.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.23",
+    "@types/phoenix": "^1.5.0",
+    "@types/react": "^16.9.43",
+    "@types/superagent": "^4.1.8",
+    "@types/theme-ui": "^0.3.6",
+    "@types/tinycolor2": "^1.4.2",
+    "husky": "^4.2.5",
+    "lint-staged": "^10.2.11",
+    "prettier": "^2.0.5",
+    "typescript": "^3.9.7"
+  }
+}
