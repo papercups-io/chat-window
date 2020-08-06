@@ -20,6 +20,8 @@ type Props = {
 };
 
 const Wrapper = ({config}: Props) => {
+  console.log('Widget config:', config);
+
   if (Object.keys(config).length === 0) {
     return null;
   }
