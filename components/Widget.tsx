@@ -20,7 +20,6 @@ type Props = {
 };
 
 const Wrapper = ({config}: Props) => {
-  // console.log({config});
   if (Object.keys(config).length === 0) {
     return null;
   }
@@ -34,13 +33,7 @@ const Wrapper = ({config}: Props) => {
     greeting,
   } = config;
 
-  const customer = null;
-
-  // if (!accountId) {
-  //   throw new Error('An accountId is required to render the chat window!');
-  // }
-
-  // console.log({accountId, title, subtitle, greeting});
+  const customer = null; // FIXME: how should we pass customer metadata through?
 
   const theme = getThemeConfig({primary: primaryColor});
 

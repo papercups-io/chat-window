@@ -342,6 +342,7 @@ class ChatWindow extends React.Component<Props, State> {
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 100px 0px',
           }}
         >
+          {/* TODO: move into its own component */}
           <Flex sx={{alignItems: 'center'}}>
             <Box mr={3} sx={{flex: 1}}>
               <Textarea
