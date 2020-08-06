@@ -10,9 +10,13 @@ import store from '../helpers/storage';
 import {getWebsocketUrl} from '../helpers/config';
 
 // TODO: set this up somewhere else
-const setup = (w: any) => {
+const setup = (w: any, handler: (msg: any) => void) => {
+  console.log('Setting up!');
+
   const cb = (msg: any) => {
     console.log('Received message!', msg);
+
+    handler(msg);
   };
 
   if (w.addEventListener) {
@@ -66,7 +70,7 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.unsubscribe = setup(window);
+    this.unsubscribe = setup(window, this.postMessageHandlers);
 
     this.storage = store(localStorage || sessionStorage);
 
@@ -88,9 +92,25 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   emit = (event: string, payload?: any) => {
-    console.log('Sending event:', {event, payload});
+    console.log('Sending event from iframe:', {event, payload});
 
     parent.postMessage({event, payload}, '*'); // TODO: remove
+  };
+
+  postMessageHandlers = (msg: any) => {
+    const {event, payload = {}} = msg.data;
+    console.log('Handling in iframe:', msg.data);
+
+    switch (event) {
+      case 'customer:update':
+        const {customerId, metadata} = payload;
+
+        return this.updateExistingCustomer(customerId, metadata);
+      case 'papercups:ping':
+        return console.log('Pong!');
+      default:
+        return null;
+    }
   };
 
   getDefaultGreeting = (): Array<Message> => {
