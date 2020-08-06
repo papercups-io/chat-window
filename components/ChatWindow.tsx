@@ -46,6 +46,7 @@ type State = {
 class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
 
+  unsubscribe: () => {};
   storage: any;
   socket: any;
   channel: any;
@@ -65,7 +66,7 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    setup(window);
+    this.unsubscribe = setup(window);
 
     this.storage = store(localStorage || sessionStorage);
 
@@ -77,16 +78,20 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.setState({customerId}, () => {
       this.fetchLatestConversation(customerId);
-
-      // TODO: handle this somewhere else
-      console.log('Sending event - chat:loaded', customerId);
-      parent.postMessage('chat:loaded', '*'); // TODO: remove *
+      this.emit('chat:loaded');
     });
   }
 
   componentWillUnmount() {
     this.channel && this.channel.leave();
+    this.unsubscribe();
   }
+
+  emit = (event: string, payload?: any) => {
+    console.log('Sending event:', {event, payload});
+
+    parent.postMessage({event, payload}, '*'); // TODO: remove
+  };
 
   getDefaultGreeting = (): Array<Message> => {
     const {greeting} = this.props;
@@ -225,10 +230,12 @@ class ChatWindow extends React.Component<Props, State> {
         console.log('Unable to join!', err);
       });
 
+    this.emit('conversation:join', {conversationId, customerId});
     this.scrollToEl.scrollIntoView();
   };
 
   handleNewMessage = (message: Message) => {
+    this.emit('message:received', {message});
     this.setState({messages: [...this.state.messages, message]}, () => {
       this.scrollToEl.scrollIntoView();
     });
