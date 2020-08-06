@@ -15,12 +15,73 @@ type Config = {
   defaultIsOpen?: boolean;
 };
 
+// TODO: DRY up with ChatWindow handlers
+const setup = (w: any, handler: (msg: any) => void) => {
+  const cb = (msg: any) => {
+    console.log('Received message!', msg);
+
+    handler(msg);
+  };
+
+  if (w.addEventListener) {
+    w.addEventListener('message', cb);
+
+    return () => w.removeEventListener('message', cb);
+  } else {
+    w.attachEvent('onmessage', cb);
+
+    return () => w.detachEvent('message', cb);
+  }
+};
+
+const sanitizeConfigPayload = (payload: any): Config => {
+  if (!payload) {
+    return {};
+  }
+
+  const {accountId, title, subtitle, primaryColor, baseUrl, greeting} = payload;
+
+  return {
+    accountId,
+    title,
+    subtitle,
+    primaryColor,
+    baseUrl,
+    greeting,
+  };
+};
+
 type Props = {
   config: Config;
 };
 
-const Wrapper = ({config}: Props) => {
-  console.log('Widget config:', config);
+const Wrapper = ({config: defaultConfig}: Props) => {
+  console.log('Widget default config:', defaultConfig);
+  const [config, setConfig] = React.useState(defaultConfig);
+
+  React.useEffect(() => {
+    const unsubscribe = setup(window, handlers);
+
+    return () => unsubscribe();
+  }, []);
+
+  function handleConfigUpdate(payload) {
+    const updates = sanitizeConfigPayload(payload);
+
+    setConfig({...config, ...updates});
+  }
+
+  function handlers(msg: any) {
+    console.log('Handling in wrapper:', msg.data);
+    const {event, payload = {}} = msg.data;
+
+    switch (event) {
+      case 'config:update':
+        return handleConfigUpdate(payload);
+      default:
+        return null;
+    }
+  }
 
   if (Object.keys(config).length === 0) {
     return null;
@@ -35,8 +96,6 @@ const Wrapper = ({config}: Props) => {
     greeting,
   } = config;
 
-  const customer = null; // FIXME: how should we pass customer metadata through?
-
   const theme = getThemeConfig({primary: primaryColor});
 
   return (
@@ -46,7 +105,6 @@ const Wrapper = ({config}: Props) => {
         subtitle={subtitle}
         accountId={accountId}
         greeting={greeting}
-        customer={customer}
         baseUrl={baseUrl}
       />
     </ThemeProvider>
