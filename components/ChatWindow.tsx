@@ -6,7 +6,6 @@ import ChatMessage from './ChatMessage';
 import SendIcon from './SendIcon';
 import * as API from '../helpers/api';
 import {Message, now} from '../helpers/utils';
-import store from '../helpers/storage';
 import {getWebsocketUrl} from '../helpers/config';
 
 // TODO: set this up somewhere else
@@ -32,6 +31,7 @@ const setup = (w: any, handler: (msg: any) => void) => {
 
 type Props = {
   accountId: string;
+  customerId?: string;
   title?: string;
   subtitle?: string;
   baseUrl?: string;
@@ -51,7 +51,6 @@ class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
 
   unsubscribe: () => {};
-  storage: any;
   socket: any;
   channel: any;
 
@@ -63,29 +62,26 @@ class ChatWindow extends React.Component<Props, State> {
       messages: [],
       // TODO: figure out how to determine these, either by IP or localStorage
       // (eventually we will probably use cookies for this)
-      customerId: null,
+      // TODO: remove this from state if possible, just use props instead?
+      customerId: props.customerId,
       conversationId: null,
       isSending: false,
     };
   }
 
   componentDidMount() {
+    const {baseUrl, customerId} = this.props;
     const win = window as any;
 
     this.unsubscribe = setup(win, this.postMessageHandlers);
 
-    this.storage = store(win);
-
-    const customerId = this.storage.getCustomerId();
-    const websocketUrl = getWebsocketUrl(this.props.baseUrl);
+    const websocketUrl = getWebsocketUrl(baseUrl);
 
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
 
-    this.setState({customerId}, () => {
-      this.fetchLatestConversation(customerId);
-      this.emit('chat:loaded');
-    });
+    this.fetchLatestConversation(customerId);
+    this.emit('chat:loaded');
   }
 
   componentWillUnmount() {
@@ -125,6 +121,7 @@ class ChatWindow extends React.Component<Props, State> {
     return [
       {
         type: 'bot',
+        customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
         created_at: now().toString(),
       },
@@ -189,7 +186,6 @@ class ChatWindow extends React.Component<Props, State> {
       baseUrl
     );
 
-    this.storage.setCustomerId(customerId);
     this.emit('customer:created', {customerId});
 
     return customerId;

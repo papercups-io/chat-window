@@ -11,6 +11,7 @@ type Config = {
   accountId?: string;
   baseUrl?: string;
   greeting?: string;
+  customerId?: string;
   customer?: CustomerMetadata;
   defaultIsOpen?: boolean;
 };
@@ -89,11 +90,12 @@ const Wrapper = ({config: defaultConfig}: Props) => {
 
   const {
     accountId,
+    customerId,
+    greeting,
     title = 'Welcome!',
     subtitle = 'How can we help you?',
     primaryColor = '1890ff',
     baseUrl = 'http://localhost:4000',
-    greeting,
   } = config;
 
   const theme = getThemeConfig({primary: primaryColor});
@@ -104,6 +106,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         title={title}
         subtitle={subtitle}
         accountId={accountId}
+        customerId={customerId}
         greeting={greeting}
         baseUrl={baseUrl}
       />
