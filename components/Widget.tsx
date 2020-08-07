@@ -106,7 +106,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     subtitle = 'How can we help you?',
     newMessagePlaceholder = 'Start typing...',
     primaryColor = '1890ff',
-    baseUrl = 'http://localhost:4000',
+    baseUrl = 'https://app.papercups.io',
   } = config;
 
   const theme = getThemeConfig({primary: primaryColor});
