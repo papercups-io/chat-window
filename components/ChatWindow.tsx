@@ -71,11 +71,10 @@ class ChatWindow extends React.Component<Props, State> {
 
   componentDidMount() {
     const win = window as any;
-    const storage = win && (win.localStorage || win.sessionStorage);
 
     this.unsubscribe = setup(win, this.postMessageHandlers);
 
-    this.storage = store(storage);
+    this.storage = store(win);
 
     const customerId = this.storage.getCustomerId();
     const websocketUrl = getWebsocketUrl(this.props.baseUrl);
@@ -91,7 +90,7 @@ class ChatWindow extends React.Component<Props, State> {
 
   componentWillUnmount() {
     this.channel && this.channel.leave();
-    this.unsubscribe();
+    this.unsubscribe && this.unsubscribe();
   }
 
   emit = (event: string, payload?: any) => {
@@ -191,6 +190,7 @@ class ChatWindow extends React.Component<Props, State> {
     );
 
     this.storage.setCustomerId(customerId);
+    this.emit('customer:created', {customerId});
 
     return customerId;
   };
