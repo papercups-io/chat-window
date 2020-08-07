@@ -70,9 +70,12 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.unsubscribe = setup(window, this.postMessageHandlers);
+    const win = window as any;
+    const storage = win && (win.localStorage || win.sessionStorage);
 
-    this.storage = store(localStorage || sessionStorage);
+    this.unsubscribe = setup(win, this.postMessageHandlers);
+
+    this.storage = store(storage);
 
     const customerId = this.storage.getCustomerId();
     const websocketUrl = getWebsocketUrl(this.props.baseUrl);
