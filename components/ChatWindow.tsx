@@ -36,6 +36,7 @@ type Props = {
   subtitle?: string;
   baseUrl?: string;
   greeting?: string;
+  newMessagePlaceholder?: string;
   customer?: API.CustomerMetadata;
 };
 
@@ -301,7 +302,11 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   render() {
-    const {title = 'Welcome!', subtitle = 'How can we help you?'} = this.props;
+    const {
+      title = 'Welcome!',
+      subtitle = 'How can we help you?',
+      newMessagePlaceholder = 'Start typing...',
+    } = this.props;
     const {customerId, message, messages = [], isSending} = this.state;
 
     return (
@@ -378,7 +383,7 @@ class ChatWindow extends React.Component<Props, State> {
                   variant: 'styles.textarea.transparent',
                 }}
                 className="TextArea--transparent"
-                placeholder="Start typing..."
+                placeholder={newMessagePlaceholder}
                 rows={1}
                 autoFocus
                 value={message}

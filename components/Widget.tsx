@@ -12,6 +12,7 @@ type Config = {
   baseUrl?: string;
   greeting?: string;
   customerId?: string;
+  newMessagePlaceholder?: string;
   customer?: CustomerMetadata;
   defaultIsOpen?: boolean;
 };
@@ -40,7 +41,15 @@ const sanitizeConfigPayload = (payload: any): Config => {
     return {};
   }
 
-  const {accountId, title, subtitle, primaryColor, baseUrl, greeting} = payload;
+  const {
+    accountId,
+    title,
+    subtitle,
+    primaryColor,
+    baseUrl,
+    greeting,
+    newMessagePlaceholder,
+  } = payload;
 
   return {
     accountId,
@@ -49,6 +58,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     primaryColor,
     baseUrl,
     greeting,
+    newMessagePlaceholder,
   };
 };
 
@@ -94,6 +104,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     greeting,
     title = 'Welcome!',
     subtitle = 'How can we help you?',
+    newMessagePlaceholder = 'Start typing...',
     primaryColor = '1890ff',
     baseUrl = 'http://localhost:4000',
   } = config;
@@ -108,6 +119,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         accountId={accountId}
         customerId={customerId}
         greeting={greeting}
+        newMessagePlaceholder={newMessagePlaceholder}
         baseUrl={baseUrl}
       />
     </ThemeProvider>
