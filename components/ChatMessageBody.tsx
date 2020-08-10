@@ -1,0 +1,62 @@
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import breaks from 'remark-breaks';
+import {Box} from 'theme-ui';
+
+/**
+ * Whitelist node types that we allow when we render markdown.
+ * Reference https://github.com/rexxars/react-markdown#node-types
+ */
+export const allowedNodeTypes: any[] = [
+  'root',
+  'text',
+  'break',
+  'paragraph',
+  'emphasis',
+  'strong',
+  'blockquote',
+  'delete',
+  'link',
+  'linkReference',
+  'list',
+  'listItem',
+  'heading',
+  'inlineCode',
+  'code',
+];
+
+type ChatMessageBoxProps = {
+  className?: string;
+  content: string;
+  sx?: object;
+};
+
+const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
+  const parsedSx = Object.assign(sx, {
+    px: '14px',
+    py: 2,
+    borderRadius: 4,
+    maxWidth: '80%',
+    p: {
+      mb: 0,
+    },
+    blockquote: {
+      px: 2,
+      borderLeft: '3px solid',
+      mb: 0,
+    },
+  });
+
+  return (
+    <Box sx={parsedSx}>
+      <ReactMarkdown
+        className={`Text--markdown ${className}`}
+        source={content}
+        allowedTypes={allowedNodeTypes}
+        plugins={[breaks]}
+      />
+    </Box>
+  );
+};
+
+export default ChatMessageBox;

@@ -1,9 +1,9 @@
 import React from 'react';
-import {Box, Button, Flex, Heading, Text, Textarea} from 'theme-ui';
+import {Box, Flex, Heading, Text} from 'theme-ui';
 import {Socket} from 'phoenix';
 import {motion} from 'framer-motion';
 import ChatMessage from './ChatMessage';
-import SendIcon from './SendIcon';
+import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
 import {Message, now} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
@@ -266,7 +266,9 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   handleKeyDown = (e: any) => {
-    if (e.key === 'Enter') {
+    const {key, shiftKey} = e;
+
+    if (!shiftKey && key === 'Enter') {
       this.handleSendMessage(e);
     }
   };
@@ -373,44 +375,14 @@ class ChatWindow extends React.Component<Props, State> {
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 100px 0px',
           }}
         >
-          {/* TODO: move into its own component */}
-          <Flex sx={{alignItems: 'center'}}>
-            <Box mr={3} sx={{flex: 1}}>
-              <Textarea
-                sx={{
-                  fontFamily: 'body',
-                  color: 'input',
-                  variant: 'styles.textarea.transparent',
-                }}
-                className="TextArea--transparent"
-                placeholder={newMessagePlaceholder}
-                rows={1}
-                autoFocus
-                value={message}
-                onKeyDown={this.handleKeyDown}
-                onChange={this.handleMessageChange}
-              />
-            </Box>
-            <Box pl={3}>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isSending}
-                onClick={this.handleSendMessage}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: '50%',
-                  height: '36px',
-                  width: '36px',
-                  padding: 0,
-                }}
-              >
-                <SendIcon width={16} height={16} fill="background" />
-              </Button>
-            </Box>
-          </Flex>
+          <ChatFooter
+            message={message}
+            placeholder={newMessagePlaceholder}
+            isSending={isSending}
+            onKeyDown={this.handleKeyDown}
+            onChangeMessage={this.handleMessageChange}
+            onSendMessage={this.handleSendMessage}
+          />
         </Box>
         <img
           alt="Papercups"

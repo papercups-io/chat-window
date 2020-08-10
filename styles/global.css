@@ -23,3 +23,30 @@ body,
   flex: 1;
   max-height: 100%;
 }
+
+.TextArea--transparent,
+.TextArea--transparent:hover,
+.TextArea--transparent:focus,
+.TextArea--transparent:active {
+  border: none;
+  box-shadow: none;
+  resize: none;
+}
+
+.Text--markdown a {
+  text-decoration: underline;
+}
+
+.Text--white {
+  color: #fff;
+}
+
+.Text--white > h1,
+.Text--white > h2,
+.Text--white > h3,
+.Text--white > h4,
+.Text--white > h5,
+.Text--white > h6,
+.Text--white a {
+  color: #fff;
+}
