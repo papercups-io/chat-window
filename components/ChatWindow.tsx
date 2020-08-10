@@ -41,7 +41,6 @@ type Props = {
 };
 
 type State = {
-  message: string;
   messages: Array<Message>;
   customerId: string;
   conversationId: string | null;
@@ -59,7 +58,6 @@ class ChatWindow extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      message: '',
       messages: [],
       // TODO: figure out how to determine these, either by IP or localStorage
       // (eventually we will probably use cookies for this)
@@ -179,8 +177,9 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  createNewCustomerId = async (accountId: string) => {
-    const {baseUrl, customer: metadata} = this.props;
+  createNewCustomerId = async (accountId: string, email?: string) => {
+    const {baseUrl, customer} = this.props;
+    const metadata = email ? {...customer, email} : customer;
     const {id: customerId} = await API.createNewCustomer(
       accountId,
       metadata,
@@ -209,10 +208,10 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  initializeNewConversation = async () => {
+  initializeNewConversation = async (email?: string) => {
     const {accountId, baseUrl} = this.props;
 
-    const customerId = await this.createNewCustomerId(accountId);
+    const customerId = await this.createNewCustomerId(accountId, email);
     const {id: conversationId} = await API.createNewConversation(
       accountId,
       customerId,
@@ -261,22 +260,8 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
-  handleMessageChange = (e: any) => {
-    this.setState({message: e.target.value});
-  };
-
-  handleKeyDown = (e: any) => {
-    const {key, shiftKey} = e;
-
-    if (!shiftKey && key === 'Enter') {
-      this.handleSendMessage(e);
-    }
-  };
-
-  handleSendMessage = async (e?: any) => {
-    e && e.preventDefault();
-
-    const {message, customerId, conversationId, isSending} = this.state;
+  handleSendMessage = async (message: string, email?: string) => {
+    const {customerId, conversationId, isSending} = this.state;
 
     if (isSending || !message || message.trim().length === 0) {
       return;
@@ -285,7 +270,7 @@ class ChatWindow extends React.Component<Props, State> {
     this.setState({isSending: true});
 
     if (!customerId || !conversationId) {
-      await this.initializeNewConversation();
+      await this.initializeNewConversation(email);
     }
 
     // We should never hit this block, just adding to satisfy TypeScript
@@ -300,7 +285,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: this.state.customerId,
     });
 
-    this.setState({message: '', isSending: false});
+    this.setState({isSending: false});
   };
 
   render() {
@@ -309,7 +294,7 @@ class ChatWindow extends React.Component<Props, State> {
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
     } = this.props;
-    const {customerId, message, messages = [], isSending} = this.state;
+    const {customerId, messages = [], isSending} = this.state;
 
     return (
       <Flex
@@ -368,7 +353,7 @@ class ChatWindow extends React.Component<Props, State> {
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
         <Box
-          p={2}
+          px={2}
           sx={{
             borderTop: '1px solid rgb(230, 230, 230)',
             // TODO: only show shadow on focus TextArea below
@@ -376,11 +361,8 @@ class ChatWindow extends React.Component<Props, State> {
           }}
         >
           <ChatFooter
-            message={message}
             placeholder={newMessagePlaceholder}
             isSending={isSending}
-            onKeyDown={this.handleKeyDown}
-            onChangeMessage={this.handleMessageChange}
             onSendMessage={this.handleSendMessage}
           />
         </Box>
