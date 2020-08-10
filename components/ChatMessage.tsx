@@ -3,6 +3,7 @@ import {Box, Flex, Text} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import BotIcon from './BotIcon';
+import ChatMessageBody from './ChatMessageBody';
 import {Message, User} from '../helpers/utils';
 
 dayjs.extend(utc);
@@ -113,17 +114,15 @@ const ChatMessage = ({
     return (
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
-          <Box
-            px="14px"
-            py={2}
+          <ChatMessageBody
+            className="Text--white"
             sx={{
               color: 'background',
               bg: 'primary',
-              borderRadius: 4,
+              whiteSpace: 'pre-wrap',
             }}
-          >
-            <Text>{body}</Text>
-          </Box>
+            content={body}
+          />
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
@@ -139,18 +138,14 @@ const ChatMessage = ({
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
         <SenderAvatar name={identifer} user={user} isBot={isBot} />
 
-        <Box
-          px="14px"
-          py={2}
+        <ChatMessageBody
           sx={{
             color: 'text',
             bg: 'rgb(245, 245, 245)',
-            borderRadius: 4,
-            maxWidth: '80%',
+            whiteSpace: 'pre-wrap',
           }}
-        >
-          {body}
-        </Box>
+          content={body}
+        />
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex m={1} sx={{justifyContent: 'flex-start'}}>
