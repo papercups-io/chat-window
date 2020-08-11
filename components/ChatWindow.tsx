@@ -5,7 +5,7 @@ import {motion} from 'framer-motion';
 import ChatMessage from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message, now} from '../helpers/utils';
+import {Message} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
 
 // TODO: set this up somewhere else
@@ -43,6 +43,7 @@ type Props = {
 
 type State = {
   messages: Array<Message>;
+  unsent: Array<Message>;
   customerId: string;
   conversationId: string | null;
   isSending: boolean;
@@ -60,6 +61,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.state = {
       messages: [],
+      unsent: [],
       // TODO: figure out how to determine these, either by IP or localStorage
       // (eventually we will probably use cookies for this)
       // TODO: remove this from state if possible, just use props instead?
@@ -123,7 +125,7 @@ class ChatWindow extends React.Component<Props, State> {
         type: 'bot',
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
-        created_at: now().toString(),
+        created_at: new Date().toString(),
       },
     ];
   };
@@ -256,19 +258,38 @@ class ChatWindow extends React.Component<Props, State> {
 
   handleNewMessage = (message: Message) => {
     this.emit('message:received', {message});
-    this.setState({messages: [...this.state.messages, message]}, () => {
-      this.scrollToEl.scrollIntoView();
-    });
+    this.setState(
+      {
+        messages: [...this.state.messages, message],
+        unsent: this.state.unsent.filter(
+          ({body, customer_id}) =>
+            customer_id !== message.customer_id && body !== message.body
+        ),
+      },
+      () => {
+        this.scrollToEl.scrollIntoView();
+      }
+    );
   };
 
   handleSendMessage = async (message: string, email?: string) => {
-    const {customerId, conversationId, isSending} = this.state;
+    const {customerId, conversationId, isSending, unsent = []} = this.state;
 
     if (isSending || !message || message.trim().length === 0) {
       return;
     }
 
-    this.setState({isSending: true});
+    this.setState({
+      isSending: true,
+      unsent: [
+        ...unsent,
+        {
+          body: message,
+          customer_id: customerId,
+          created_at: new Date().toISOString(),
+        },
+      ],
+    });
 
     if (!customerId || !conversationId) {
       await this.initializeNewConversation(email);
@@ -315,8 +336,12 @@ class ChatWindow extends React.Component<Props, State> {
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
     } = this.props;
-    const {customerId, messages = [], isSending} = this.state;
+    const {customerId, messages = [], unsent = [], isSending} = this.state;
     const shouldAskForEmail = this.askForEmailUpfront();
+    const displayedMessages = [...messages, ...unsent].sort(
+      (a: Message, b: Message) =>
+        +new Date(a.created_at) - +new Date(b.created_at)
+    );
 
     return (
       <Flex
@@ -346,7 +371,7 @@ class ChatWindow extends React.Component<Props, State> {
             overflowY: 'scroll',
           }}
         >
-          {messages.map((msg, key) => {
+          {displayedMessages.map((msg, key) => {
             // Slight hack
             const next = messages[key + 1];
             const isLastInGroup = next

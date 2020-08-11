@@ -12,7 +12,7 @@ export type Message = {
   customer_id?: string;
   user_id?: number;
   user?: User;
-  type?: 'bot' | 'agent' | 'customer';
+  type?: 'bot' | 'agent' | 'customer' | 'unsent';
 };
 
 // TODO: handle this on the server instead
