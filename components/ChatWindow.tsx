@@ -37,6 +37,7 @@ type Props = {
   baseUrl?: string;
   greeting?: string;
   newMessagePlaceholder?: string;
+  shouldRequireEmail?: boolean;
   customer?: API.CustomerMetadata;
 };
 
@@ -288,6 +289,25 @@ class ChatWindow extends React.Component<Props, State> {
     this.setState({isSending: false});
   };
 
+  askForEmailUpfront = () => {
+    const {customer, shouldRequireEmail} = this.props;
+    const {customerId, messages = []} = this.state;
+
+    if (!shouldRequireEmail) {
+      return false;
+    }
+
+    if (customer && customer.email) {
+      return false;
+    }
+
+    const previouslySentMessages = messages.find(
+      (msg) => msg.customer_id === customerId
+    );
+
+    return !customerId && !previouslySentMessages;
+  };
+
   render() {
     const {
       title = 'Welcome!',
@@ -295,6 +315,7 @@ class ChatWindow extends React.Component<Props, State> {
       newMessagePlaceholder = 'Start typing...',
     } = this.props;
     const {customerId, messages = [], isSending} = this.state;
+    const shouldAskForEmail = this.askForEmailUpfront();
 
     return (
       <Flex
@@ -363,6 +384,7 @@ class ChatWindow extends React.Component<Props, State> {
           <ChatFooter
             placeholder={newMessagePlaceholder}
             isSending={isSending}
+            shouldRequireEmail={shouldAskForEmail}
             onSendMessage={this.handleSendMessage}
           />
         </Box>

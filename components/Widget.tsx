@@ -15,6 +15,7 @@ type Config = {
   newMessagePlaceholder?: string;
   customer?: CustomerMetadata;
   defaultIsOpen?: boolean;
+  requireEmailUpfront?: boolean;
 };
 
 // TODO: DRY up with ChatWindow handlers
@@ -107,8 +108,10 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     newMessagePlaceholder = 'Start typing...',
     primaryColor = '1890ff',
     baseUrl = 'https://app.papercups.io',
+    requireEmailUpfront = '0',
   } = config;
 
+  const shouldRequireEmail = !!Number(requireEmailUpfront);
   const theme = getThemeConfig({primary: primaryColor});
 
   return (
@@ -120,6 +123,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         customerId={customerId}
         greeting={greeting}
         newMessagePlaceholder={newMessagePlaceholder}
+        shouldRequireEmail={shouldRequireEmail}
         baseUrl={baseUrl}
       />
     </ThemeProvider>
