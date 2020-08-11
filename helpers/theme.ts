@@ -157,7 +157,7 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       img: {
         maxWidth: '100%',
       },
-      textarea: {
+      input: {
         transparent: {
           border: 'none',
           boxShadow: 'none',
@@ -180,6 +180,10 @@ export const getThemeConfig = (settings: ThemeSettings) => {
             boxShadow: 'none',
             resize: 'none',
             outline: 0,
+          },
+          '&:disabled': {
+            opacity: 0.8,
+            cursor: 'not-allowed',
           },
         },
       },
