@@ -301,6 +301,7 @@ class ChatWindow extends React.Component<Props, State> {
       return false;
     }
 
+    // TODO: figure out what this actual logic should be...
     const previouslySentMessages = messages.find(
       (msg) => msg.customer_id === customerId
     );
