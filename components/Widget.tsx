@@ -21,7 +21,7 @@ type Config = {
 // TODO: DRY up with ChatWindow handlers
 const setup = (w: any, handler: (msg: any) => void) => {
   const cb = (msg: any) => {
-    console.log('Received message!', msg);
+    console.debug('Received message!', msg);
 
     handler(msg);
   };
@@ -68,7 +68,7 @@ type Props = {
 };
 
 const Wrapper = ({config: defaultConfig}: Props) => {
-  console.log('Widget default config:', defaultConfig);
+  console.debug('Widget default config:', defaultConfig);
   const [config, setConfig] = React.useState(defaultConfig);
 
   React.useEffect(() => {
@@ -84,7 +84,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
   }
 
   function handlers(msg: any) {
-    console.log('Handling in wrapper:', msg.data);
+    console.debug('Handling in wrapper:', msg.data);
     const {event, payload = {}} = msg.data;
 
     switch (event) {
