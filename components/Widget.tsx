@@ -16,6 +16,7 @@ type Config = {
   customer?: CustomerMetadata;
   defaultIsOpen?: boolean;
   requireEmailUpfront?: boolean;
+  mobile?: boolean;
 };
 
 // TODO: DRY up with ChatWindow handlers
@@ -109,9 +110,11 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     primaryColor = '1890ff',
     baseUrl = 'https://app.papercups.io',
     requireEmailUpfront = '0',
+    mobile = '0',
   } = config;
 
   const shouldRequireEmail = !!Number(requireEmailUpfront);
+  const isMobile = !!Number(mobile);
   const theme = getThemeConfig({primary: primaryColor});
 
   return (
@@ -124,6 +127,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         greeting={greeting}
         newMessagePlaceholder={newMessagePlaceholder}
         shouldRequireEmail={shouldRequireEmail}
+        isMobile={isMobile}
         baseUrl={baseUrl}
       />
     </ThemeProvider>

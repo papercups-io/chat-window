@@ -38,6 +38,7 @@ type Props = {
   greeting?: string;
   newMessagePlaceholder?: string;
   shouldRequireEmail?: boolean;
+  isMobile?: boolean;
   customer?: API.CustomerMetadata;
 };
 
@@ -314,12 +315,14 @@ class ChatWindow extends React.Component<Props, State> {
       title = 'Welcome!',
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
+      isMobile = false,
     } = this.props;
     const {customerId, messages = [], isSending} = this.state;
     const shouldAskForEmail = this.askForEmailUpfront();
 
     return (
       <Flex
+        className={isMobile ? 'Mobile' : ''}
         sx={{
           bg: 'background',
           flexDirection: 'column',
