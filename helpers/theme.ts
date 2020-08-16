@@ -163,6 +163,7 @@ export const getThemeConfig = (settings: ThemeSettings) => {
           boxShadow: 'none',
           resize: 'none',
           outline: 0,
+          fontSize: 1,
           '&:hover': {
             border: 'none',
             boxShadow: 'none',
