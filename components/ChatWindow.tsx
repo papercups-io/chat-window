@@ -46,6 +46,7 @@ type State = {
   customerId: string;
   conversationId: string | null;
   isSending: boolean;
+  isOpen: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -66,6 +67,7 @@ class ChatWindow extends React.Component<Props, State> {
       customerId: props.customerId,
       conversationId: null,
       isSending: false,
+      isOpen: false,
     };
   }
 
@@ -92,7 +94,7 @@ class ChatWindow extends React.Component<Props, State> {
   emit = (event: string, payload?: any) => {
     console.debug('Sending event from iframe:', {event, payload});
 
-    parent.postMessage({event, payload}, '*'); // TODO: remove
+    parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
 
   postMessageHandlers = (msg: any) => {
@@ -104,6 +106,8 @@ class ChatWindow extends React.Component<Props, State> {
         const {customerId, metadata} = payload;
 
         return this.updateExistingCustomer(customerId, metadata);
+      case 'papercups:toggle':
+        return this.setState({isOpen: !!payload.isOpen});
       case 'papercups:ping':
         return console.debug('Pong!');
       default:
@@ -344,7 +348,7 @@ class ChatWindow extends React.Component<Props, State> {
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
     } = this.props;
-    const {customerId, messages = [], isSending} = this.state;
+    const {customerId, messages = [], isSending, isOpen} = this.state;
     const shouldAskForEmail = this.askForEmailUpfront();
 
     return (
@@ -413,7 +417,12 @@ class ChatWindow extends React.Component<Props, State> {
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 100px 0px',
           }}
         >
+          {/*
+            NB: we use a `key` prop here to force re-render on open so
+            that the input will auto-focus appropriately
+          */}
           <ChatFooter
+            key={isOpen ? 1 : 0}
             placeholder={newMessagePlaceholder}
             isSending={isSending}
             shouldRequireEmail={shouldAskForEmail}
