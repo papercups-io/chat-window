@@ -103,9 +103,9 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, created_at, user, type} = message;
-  const created = dayjs.utc(created_at);
-  const timestamp = formatRelativeTime(created);
+  const {body, created_at, sent_at, user, type} = message;
+  const created = created_at ? dayjs.utc(created_at) : null;
+  const timestamp = created ? formatRelativeTime(created) : null;
   const isBot = type === 'bot';
   // TODO: include profile photo if available
   const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
@@ -126,7 +126,9 @@ const ChatMessage = ({
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
-            <Text sx={{color: 'gray'}}>Sent {timestamp}</Text>
+            <Text sx={{color: 'gray'}}>
+              {timestamp ? `Sent ${timestamp}` : 'Sending...'}
+            </Text>
           </Flex>
         )}
       </Box>

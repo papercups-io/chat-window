@@ -29,10 +29,9 @@ const ChatFooter = ({
   const handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
-    onSendMessage(message, email).then(() => {
-      setMessage('');
-      setEmail('');
-    });
+    onSendMessage(message, email);
+    setMessage('');
+    setEmail('');
   };
 
   const handleKeyDown = (e: any) => {

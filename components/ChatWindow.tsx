@@ -5,7 +5,7 @@ import {motion} from 'framer-motion';
 import ChatMessage from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message, now} from '../helpers/utils';
+import {Message} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
 
 // TODO: set this up somewhere else
@@ -111,7 +111,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  getDefaultGreeting = (): Array<Message> => {
+  getDefaultGreeting = (ts?: number): Array<Message> => {
     const {greeting} = this.props;
 
     if (!greeting) {
@@ -123,7 +123,7 @@ class ChatWindow extends React.Component<Props, State> {
         type: 'bot',
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
-        created_at: now().toString(),
+        created_at: new Date(ts ? ts - 1000 : null).toISOString(), // FIXME
       },
     ];
   };
@@ -164,10 +164,17 @@ class ChatWindow extends React.Component<Props, State> {
         (a: Message, b: Message) =>
           +new Date(a.created_at) - +new Date(b.created_at)
       );
+      const [firstMessage] = formattedMessages;
+      const firstMessageTimestamp = +new Date(
+        firstMessage.created_at ? firstMessage.created_at : null
+      );
 
       this.setState({
         conversationId,
-        messages: [...this.getDefaultGreeting(), ...formattedMessages],
+        messages: [
+          ...this.getDefaultGreeting(firstMessageTimestamp),
+          ...formattedMessages,
+        ],
       });
 
       this.joinConversationChannel(conversationId, customerId);
@@ -237,6 +244,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: customerId,
     });
 
+    // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.on('shout', (message: any) => {
       this.handleNewMessage(message);
     });
@@ -254,9 +262,25 @@ class ChatWindow extends React.Component<Props, State> {
     this.scrollToEl.scrollIntoView();
   };
 
+  areDatesEqual = (x: string, y: string) => {
+    return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
+  };
+
   handleNewMessage = (message: Message) => {
     this.emit('message:received', {message});
-    this.setState({messages: [...this.state.messages, message]}, () => {
+
+    const {messages = []} = this.state;
+    const unsent = messages.find(
+      (m) =>
+        !m.created_at &&
+        this.areDatesEqual(m.sent_at, message.sent_at) &&
+        m.body === message.body
+    );
+    const updated = unsent
+      ? messages.map((m) => (m.sent_at === unsent.sent_at ? message : m))
+      : [...messages, message];
+
+    this.setState({messages: updated}, () => {
       this.scrollToEl.scrollIntoView();
     });
   };
@@ -268,7 +292,21 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({isSending: true});
+    const sentAt = new Date().toISOString();
+    // TODO: figure out how this should work if `customerId` is null
+    const payload: Message = {
+      body: message,
+      customer_id: customerId,
+      type: 'customer',
+      sent_at: sentAt,
+    };
+
+    this.setState(
+      {
+        messages: [...this.state.messages, payload],
+      },
+      () => this.scrollToEl.scrollIntoView()
+    );
 
     if (!customerId || !conversationId) {
       await this.initializeNewConversation(email);
@@ -276,17 +314,15 @@ class ChatWindow extends React.Component<Props, State> {
 
     // We should never hit this block, just adding to satisfy TypeScript
     if (!this.channel) {
-      this.setState({isSending: false});
-
       return;
     }
 
+    // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.push('shout', {
       body: message,
       customer_id: this.state.customerId,
+      sent_at: sentAt,
     });
-
-    this.setState({isSending: false});
   };
 
   askForEmailUpfront = () => {
