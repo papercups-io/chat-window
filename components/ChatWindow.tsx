@@ -5,7 +5,7 @@ import {motion} from 'framer-motion';
 import ChatMessage from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message} from '../helpers/utils';
+import {Message, now} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
 
 // TODO: set this up somewhere else
@@ -123,7 +123,7 @@ class ChatWindow extends React.Component<Props, State> {
         type: 'bot',
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
-        created_at: new Date(ts ? ts - 1000 : null).toISOString(), // FIXME
+        created_at: now().toISOString(), // TODO: what should this be?
       },
     ];
   };
@@ -164,17 +164,10 @@ class ChatWindow extends React.Component<Props, State> {
         (a: Message, b: Message) =>
           +new Date(a.created_at) - +new Date(b.created_at)
       );
-      const [firstMessage] = formattedMessages;
-      const firstMessageTimestamp = +new Date(
-        firstMessage.created_at ? firstMessage.created_at : null
-      );
 
       this.setState({
         conversationId,
-        messages: [
-          ...this.getDefaultGreeting(firstMessageTimestamp),
-          ...formattedMessages,
-        ],
+        messages: [...this.getDefaultGreeting(), ...formattedMessages],
       });
 
       this.joinConversationChannel(conversationId, customerId);
@@ -389,7 +382,9 @@ class ChatWindow extends React.Component<Props, State> {
               ? msg.customer_id !== next.customer_id
               : true;
             const shouldDisplayTimestamp = key === messages.length - 1;
-            const isMe = msg.customer_id === customerId;
+            const isMe = msg.customer_id
+              ? msg.customer_id === customerId
+              : msg.sent_at && msg.type === 'customer';
 
             return (
               <motion.div

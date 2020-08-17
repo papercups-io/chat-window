@@ -103,7 +103,7 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, created_at, sent_at, user, type} = message;
+  const {body, created_at, user, type} = message;
   const created = created_at ? dayjs.utc(created_at) : null;
   const timestamp = created ? formatRelativeTime(created) : null;
   const isBot = type === 'bot';
