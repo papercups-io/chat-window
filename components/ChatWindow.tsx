@@ -386,10 +386,11 @@ class ChatWindow extends React.Component<Props, State> {
               ? msg.customer_id !== next.customer_id
               : true;
             const shouldDisplayTimestamp = key === messages.length - 1;
+            // NB: `msg.type` doesn't come from the server, it's just a way to
+            // help identify unsent messages in the frontend for now
             const isMe =
               msg.customer_id === customerId ||
               (msg.sent_at && msg.type === 'customer');
-            console.log('!!! DEBUG !!!', {isMe, customerId, msg});
 
             return (
               <motion.div
