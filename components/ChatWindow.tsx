@@ -387,9 +387,9 @@ class ChatWindow extends React.Component<Props, State> {
               : true;
             const shouldDisplayTimestamp = key === messages.length - 1;
             const isMe =
-              customerId && msg.customer_id
-                ? msg.customer_id === customerId
-                : msg.sent_at && msg.type === 'customer';
+              msg.customer_id === customerId ||
+              (msg.sent_at && msg.type === 'customer');
+            console.log('!!! DEBUG !!!', {isMe, customerId, msg});
 
             return (
               <motion.div
