@@ -7,8 +7,10 @@ export type User = {
 };
 
 export type Message = {
+  id?: string;
   body: string;
-  created_at: string;
+  sent_at?: string;
+  created_at?: string;
   customer_id?: string;
   user_id?: number;
   user?: User;
@@ -27,4 +29,8 @@ export function now() {
     date.getUTCMinutes(),
     date.getUTCSeconds()
   );
+}
+
+export function sleep(ms: number) {
+  return new Promise((res) => setTimeout(res, ms));
 }

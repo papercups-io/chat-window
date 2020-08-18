@@ -15,6 +15,7 @@ const ChatFooter = ({
 }) => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const messageInput = React.useRef(null);
 
   const hasValidEmail = email && email.length > 5 && email.indexOf('@') !== -1;
 
@@ -26,13 +27,20 @@ const ChatFooter = ({
     setEmail(e.target.value);
   };
 
+  const handleSetEmail = (e?: any) => {
+    e && e.preventDefault();
+
+    if (messageInput.current) {
+      messageInput.current.focus();
+    }
+  };
+
   const handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
-    onSendMessage(message, email).then(() => {
-      setMessage('');
-      setEmail('');
-    });
+    onSendMessage(message, email);
+    setMessage('');
+    setEmail('');
   };
 
   const handleKeyDown = (e: any) => {
@@ -45,7 +53,7 @@ const ChatFooter = ({
 
   return (
     <Box>
-      <form onSubmit={handleSendMessage}>
+      <form onSubmit={handleSetEmail}>
         {shouldRequireEmail && (
           <Box py={1} sx={{borderBottom: '1px solid rgb(230, 230, 230)'}}>
             <Input
@@ -56,7 +64,9 @@ const ChatFooter = ({
             />
           </Box>
         )}
+      </form>
 
+      <form onSubmit={handleSendMessage}>
         <Flex sx={{alignItems: 'center'}} py={2}>
           <Box mr={3} sx={{flex: 1}}>
             <Textarea
@@ -65,6 +75,7 @@ const ChatFooter = ({
                 color: 'input',
                 variant: 'styles.input.transparent',
               }}
+              ref={messageInput}
               className="TextArea--transparent"
               placeholder={placeholder}
               rows={1}

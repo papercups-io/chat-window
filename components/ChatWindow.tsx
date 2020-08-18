@@ -46,6 +46,7 @@ type State = {
   customerId: string;
   conversationId: string | null;
   isSending: boolean;
+  isOpen: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -66,6 +67,7 @@ class ChatWindow extends React.Component<Props, State> {
       customerId: props.customerId,
       conversationId: null,
       isSending: false,
+      isOpen: false,
     };
   }
 
@@ -92,7 +94,7 @@ class ChatWindow extends React.Component<Props, State> {
   emit = (event: string, payload?: any) => {
     console.debug('Sending event from iframe:', {event, payload});
 
-    parent.postMessage({event, payload}, '*'); // TODO: remove
+    parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
 
   postMessageHandlers = (msg: any) => {
@@ -104,6 +106,8 @@ class ChatWindow extends React.Component<Props, State> {
         const {customerId, metadata} = payload;
 
         return this.updateExistingCustomer(customerId, metadata);
+      case 'papercups:toggle':
+        return this.setState({isOpen: !!payload.isOpen});
       case 'papercups:ping':
         return console.debug('Pong!');
       default:
@@ -111,7 +115,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  getDefaultGreeting = (): Array<Message> => {
+  getDefaultGreeting = (ts?: number): Array<Message> => {
     const {greeting} = this.props;
 
     if (!greeting) {
@@ -123,7 +127,7 @@ class ChatWindow extends React.Component<Props, State> {
         type: 'bot',
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
-        created_at: now().toString(),
+        created_at: now().toISOString(), // TODO: what should this be?
       },
     ];
   };
@@ -237,6 +241,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: customerId,
     });
 
+    // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.on('shout', (message: any) => {
       this.handleNewMessage(message);
     });
@@ -254,9 +259,25 @@ class ChatWindow extends React.Component<Props, State> {
     this.scrollToEl.scrollIntoView();
   };
 
+  areDatesEqual = (x: string, y: string) => {
+    return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
+  };
+
   handleNewMessage = (message: Message) => {
     this.emit('message:received', {message});
-    this.setState({messages: [...this.state.messages, message]}, () => {
+
+    const {messages = []} = this.state;
+    const unsent = messages.find(
+      (m) =>
+        !m.created_at &&
+        this.areDatesEqual(m.sent_at, message.sent_at) &&
+        m.body === message.body
+    );
+    const updated = unsent
+      ? messages.map((m) => (m.sent_at === unsent.sent_at ? message : m))
+      : [...messages, message];
+
+    this.setState({messages: updated}, () => {
       this.scrollToEl.scrollIntoView();
     });
   };
@@ -268,7 +289,21 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({isSending: true});
+    const sentAt = new Date().toISOString();
+    // TODO: figure out how this should work if `customerId` is null
+    const payload: Message = {
+      body: message,
+      customer_id: customerId,
+      type: 'customer',
+      sent_at: sentAt,
+    };
+
+    this.setState(
+      {
+        messages: [...this.state.messages, payload],
+      },
+      () => this.scrollToEl.scrollIntoView()
+    );
 
     if (!customerId || !conversationId) {
       await this.initializeNewConversation(email);
@@ -276,17 +311,15 @@ class ChatWindow extends React.Component<Props, State> {
 
     // We should never hit this block, just adding to satisfy TypeScript
     if (!this.channel) {
-      this.setState({isSending: false});
-
       return;
     }
 
+    // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.push('shout', {
       body: message,
       customer_id: this.state.customerId,
+      sent_at: sentAt,
     });
-
-    this.setState({isSending: false});
   };
 
   askForEmailUpfront = () => {
@@ -315,7 +348,7 @@ class ChatWindow extends React.Component<Props, State> {
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
     } = this.props;
-    const {customerId, messages = [], isSending} = this.state;
+    const {customerId, messages = [], isSending, isOpen} = this.state;
     const shouldAskForEmail = this.askForEmailUpfront();
 
     return (
@@ -353,7 +386,11 @@ class ChatWindow extends React.Component<Props, State> {
               ? msg.customer_id !== next.customer_id
               : true;
             const shouldDisplayTimestamp = key === messages.length - 1;
-            const isMe = msg.customer_id === customerId;
+            // NB: `msg.type` doesn't come from the server, it's just a way to
+            // help identify unsent messages in the frontend for now
+            const isMe =
+              msg.customer_id === customerId ||
+              (msg.sent_at && msg.type === 'customer');
 
             return (
               <motion.div
@@ -382,7 +419,12 @@ class ChatWindow extends React.Component<Props, State> {
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 100px 0px',
           }}
         >
+          {/*
+            NB: we use a `key` prop here to force re-render on open so
+            that the input will auto-focus appropriately
+          */}
           <ChatFooter
+            key={isOpen ? 1 : 0}
             placeholder={newMessagePlaceholder}
             isSending={isSending}
             shouldRequireEmail={shouldAskForEmail}
