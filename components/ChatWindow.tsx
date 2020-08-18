@@ -386,9 +386,10 @@ class ChatWindow extends React.Component<Props, State> {
               ? msg.customer_id !== next.customer_id
               : true;
             const shouldDisplayTimestamp = key === messages.length - 1;
-            const isMe = msg.customer_id
-              ? msg.customer_id === customerId
-              : msg.sent_at && msg.type === 'customer';
+            const isMe =
+              customerId && msg.customer_id
+                ? msg.customer_id === customerId
+                : msg.sent_at && msg.type === 'customer';
 
             return (
               <motion.div
