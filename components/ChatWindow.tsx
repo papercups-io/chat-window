@@ -132,28 +132,43 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
-  checkForExistingCustomer = async (metadata?: API.CustomerMetadata) => {
+  // Check if we have a matching customer based on the `external_id` provided
+  // in the customer metadata. Otherwise, fallback to the cached customer id.
+  checkForExistingCustomer = async (
+    metadata?: API.CustomerMetadata,
+    defaultCustomerId?: string
+  ) => {
     if (!metadata || !metadata?.external_id) {
-      return null;
+      return defaultCustomerId;
     }
 
     const {accountId, baseUrl} = this.props;
     const {external_id: externalId} = metadata;
-    const {customer_id: customerId} = await API.findCustomerByExternalId(
-      externalId,
-      accountId,
-      baseUrl
-    );
+    const {
+      customer_id: matchingCustomerId,
+    } = await API.findCustomerByExternalId(externalId, accountId, baseUrl);
 
-    return customerId;
+    if (!matchingCustomerId || matchingCustomerId === defaultCustomerId) {
+      return defaultCustomerId;
+    }
+
+    this.setState({customerId: matchingCustomerId});
+    this.emit('customer:updated', {customerId: matchingCustomerId});
+
+    return matchingCustomerId;
   };
 
+  // Check if we've seen this customer before; if we have, try to fetch
+  // the latest existing conversation for that customer. Otherwise, we wait
+  // until the customer initiates the first message to create the conversation.
   fetchLatestConversation = async (
     cachedCustomerId?: string,
     metadata?: API.CustomerMetadata
   ) => {
-    const customerId =
-      cachedCustomerId || (await this.checkForExistingCustomer(metadata));
+    const customerId = await this.checkForExistingCustomer(
+      metadata,
+      cachedCustomerId
+    );
 
     if (!customerId) {
       // If there's no customerId, we haven't seen this customer before,
@@ -218,6 +233,8 @@ class ChatWindow extends React.Component<Props, State> {
     return customerId;
   };
 
+  // Updates the customer with metadata fields like `name`, `email`, `external_id`
+  // to make it easier to identify customers in the dashboard.
   updateExistingCustomer = async (
     customerId: string,
     metadata?: API.CustomerMetadata
@@ -246,7 +263,6 @@ class ChatWindow extends React.Component<Props, State> {
     );
 
     this.setState({customerId, conversationId});
-
     this.joinConversationChannel(conversationId, customerId);
 
     return {customerId, conversationId};
@@ -344,6 +360,8 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
+  // If this is true, we don't allow the customer to send any messages
+  // until they enter an email address in the chat widget.
   askForEmailUpfront = () => {
     const {customer, shouldRequireEmail} = this.props;
     const {customerId, messages = []} = this.state;
