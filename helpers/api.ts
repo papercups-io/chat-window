@@ -58,6 +58,17 @@ export const createNewConversation = async (
     .then((res) => res.body.data);
 };
 
+export const findCustomerByExternalId = async (
+  externalId: string,
+  accountId: string,
+  baseUrl = DEFAULT_BASE_URL
+) => {
+  return request
+    .get(`${baseUrl}/api/customers/identify`)
+    .query({external_id: externalId, account_id: accountId})
+    .then((res) => res.body.data);
+};
+
 export const fetchCustomerConversations = async (
   customerId: string,
   accountId: string,
