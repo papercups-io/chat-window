@@ -72,7 +72,7 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    const {baseUrl, customerId} = this.props;
+    const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
 
     this.unsubscribe = setup(win, this.postMessageHandlers);
@@ -82,7 +82,7 @@ class ChatWindow extends React.Component<Props, State> {
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
 
-    this.fetchLatestConversation(customerId);
+    this.fetchLatestConversation(customerId, metadata);
     this.emit('chat:loaded');
   }
 
@@ -132,7 +132,29 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
-  fetchLatestConversation = async (customerId: string) => {
+  checkForExistingCustomer = async (metadata?: API.CustomerMetadata) => {
+    if (!metadata || !metadata?.external_id) {
+      return null;
+    }
+
+    const {accountId, baseUrl} = this.props;
+    const {external_id: externalId} = metadata;
+    const {customer_id: customerId} = await API.findCustomerByExternalId(
+      externalId,
+      accountId,
+      baseUrl
+    );
+
+    return customerId;
+  };
+
+  fetchLatestConversation = async (
+    cachedCustomerId?: string,
+    metadata?: API.CustomerMetadata
+  ) => {
+    const customerId =
+      cachedCustomerId || (await this.checkForExistingCustomer(metadata));
+
     if (!customerId) {
       // If there's no customerId, we haven't seen this customer before,
       // so do nothing until they try to create a new message
@@ -141,7 +163,7 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    const {accountId, baseUrl, customer: metadata} = this.props;
+    const {accountId, baseUrl} = this.props;
 
     console.debug('Fetching conversations for customer:', customerId);
 
