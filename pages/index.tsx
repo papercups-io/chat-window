@@ -12,6 +12,7 @@ export default function Home() {
         <title>{query.title || 'Welcome'}</title>
         <link rel="icon" href="/favicon.ico" />
         <base target="_parent _blank"></base>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
       {query.accountId ? <Widget config={query} /> : null}

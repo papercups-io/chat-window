@@ -13,9 +13,10 @@ type Config = {
   greeting?: string;
   customerId?: string;
   newMessagePlaceholder?: string;
-  customer?: CustomerMetadata;
   defaultIsOpen?: boolean;
   requireEmailUpfront?: boolean;
+  mobile?: boolean;
+  metadata?: string; // stringified CustomerMetadata JSON
 };
 
 // TODO: DRY up with ChatWindow handlers
@@ -34,6 +35,14 @@ const setup = (w: any, handler: (msg: any) => void) => {
     w.attachEvent('onmessage', cb);
 
     return () => w.detachEvent('message', cb);
+  }
+};
+
+const parseCustomerMetadata = (str: string): CustomerMetadata => {
+  try {
+    return JSON.parse(str);
+  } catch (err) {
+    return {} as CustomerMetadata;
   }
 };
 
@@ -109,10 +118,14 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     primaryColor = '1890ff',
     baseUrl = 'https://app.papercups.io',
     requireEmailUpfront = '0',
+    mobile = '0',
+    metadata = '{}',
   } = config;
 
   const shouldRequireEmail = !!Number(requireEmailUpfront);
+  const isMobile = !!Number(mobile);
   const theme = getThemeConfig({primary: primaryColor});
+  const customer = parseCustomerMetadata(metadata);
 
   return (
     <ThemeProvider theme={theme}>
@@ -124,7 +137,9 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         greeting={greeting}
         newMessagePlaceholder={newMessagePlaceholder}
         shouldRequireEmail={shouldRequireEmail}
+        isMobile={isMobile}
         baseUrl={baseUrl}
+        customer={customer}
       />
     </ThemeProvider>
   );
