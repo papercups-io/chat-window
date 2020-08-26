@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Flex, Heading, Text} from 'theme-ui';
 import {Socket} from 'phoenix';
 import {motion} from 'framer-motion';
-import ChatMessage from './ChatMessage';
+import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
 import {Message, now} from '../helpers/utils';
@@ -382,6 +382,50 @@ class ChatWindow extends React.Component<Props, State> {
 
     return !customerId && !previouslySentMessages;
   };
+
+  // TODO: figure out the best way to do this!
+  renderUnreadMessages() {
+    const {isMobile = false} = this.props;
+    const {customerId, messages = []} = this.state;
+
+    return (
+      <Flex
+        className={isMobile ? 'Mobile' : ''}
+        sx={{
+          bg: 'transparent',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          height: '100%',
+          width: '100%',
+          flex: 1,
+        }}
+      >
+        {messages
+          .filter((msg) => {
+            // TODO: add `seen_at` field, so we know if message was read or not
+            const {customer_id: cid, sent_at: sentAt, type} = msg;
+            // NB: `msg.type` doesn't come from the server, it's just a way to
+            // help identify unsent messages in the frontend for now
+            const isMe = cid === customerId || (sentAt && type === 'customer');
+
+            return !isMe;
+          })
+          .map((msg, key) => {
+            return (
+              <motion.div
+                key={key}
+                initial={{opacity: 0, x: -2}}
+                animate={{opacity: 1, x: 0}}
+                transition={{duration: 0.2, ease: 'easeIn'}}
+              >
+                <PopupChatMessage key={key} message={msg} />
+              </motion.div>
+            );
+          })}
+        <div ref={(el) => (this.scrollToEl = el)} />
+      </Flex>
+    );
+  }
 
   render() {
     const {

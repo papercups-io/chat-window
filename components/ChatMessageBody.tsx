@@ -39,20 +39,23 @@ type ChatMessageBoxProps = {
 };
 
 const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
-  const parsedSx = Object.assign(sx, {
-    px: '14px',
-    py: 2,
-    borderRadius: 4,
-    maxWidth: '80%',
-    p: {
-      mb: 0,
+  const parsedSx = Object.assign(
+    {
+      px: '14px',
+      py: 2,
+      borderRadius: 4,
+      maxWidth: '80%',
+      p: {
+        mb: 0,
+      },
+      blockquote: {
+        px: 2,
+        borderLeft: '3px solid',
+        mb: 0,
+      },
     },
-    blockquote: {
-      px: 2,
-      borderLeft: '3px solid',
-      mb: 0,
-    },
-  });
+    sx
+  );
 
   return (
     <Box sx={parsedSx}>

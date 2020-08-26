@@ -107,7 +107,6 @@ const ChatMessage = ({
   const created = created_at ? dayjs.utc(created_at) : null;
   const timestamp = created ? formatRelativeTime(created) : null;
   const isBot = type === 'bot';
-  // TODO: include profile photo if available
   const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
 
   if (isMe) {
@@ -156,6 +155,39 @@ const ChatMessage = ({
           </Text>
         </Flex>
       )}
+    </Box>
+  );
+};
+
+export const PopupChatMessage = ({message}: Props) => {
+  const {body, created_at, user, type} = message;
+  const created = created_at ? dayjs.utc(created_at) : null;
+  const timestamp = created ? formatRelativeTime(created) : null;
+  const isBot = type === 'bot';
+  const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
+
+  return (
+    <Box pr={0} pl={0} pb={2}>
+      <Flex
+        sx={{justifyContent: 'flex-start', alignItems: 'center', width: '100%'}}
+      >
+        <SenderAvatar name={identifer} user={user} isBot={isBot} />
+
+        <ChatMessageBody
+          sx={{
+            px: 3,
+            py: 3,
+            color: 'text',
+            bg: 'background',
+            whiteSpace: 'pre-wrap',
+            flex: 1,
+            border: '1px solid rgb(245, 245, 245)',
+            boxShadow: 'rgba(35, 47, 53, 0.09) 0px 2px 8px 0px',
+            maxWidth: '84%',
+          }}
+          content={body}
+        />
+      </Flex>
     </Box>
   );
 };
