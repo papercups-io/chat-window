@@ -10,6 +10,7 @@ export type Message = {
   id?: string;
   body: string;
   sent_at?: string;
+  seen_at?: string;
   created_at?: string;
   customer_id?: string;
   user_id?: number;

@@ -387,6 +387,20 @@ class ChatWindow extends React.Component<Props, State> {
   renderUnreadMessages() {
     const {isMobile = false} = this.props;
     const {customerId, messages = []} = this.state;
+    const unread = messages.filter((msg) => {
+      // TODO: add `seen_at` field, so we know if message was read or not
+      const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
+
+      if (seen) {
+        return false;
+      }
+
+      // NB: `msg.type` doesn't come from the server, it's just a way to
+      // help identify unsent messages in the frontend for now
+      const isMe = cid === customerId || (sentAt && type === 'customer');
+
+      return !isMe;
+    });
 
     return (
       <Flex
@@ -400,28 +414,18 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        {messages
-          .filter((msg) => {
-            // TODO: add `seen_at` field, so we know if message was read or not
-            const {customer_id: cid, sent_at: sentAt, type} = msg;
-            // NB: `msg.type` doesn't come from the server, it's just a way to
-            // help identify unsent messages in the frontend for now
-            const isMe = cid === customerId || (sentAt && type === 'customer');
-
-            return !isMe;
-          })
-          .map((msg, key) => {
-            return (
-              <motion.div
-                key={key}
-                initial={{opacity: 0, x: -2}}
-                animate={{opacity: 1, x: 0}}
-                transition={{duration: 0.2, ease: 'easeIn'}}
-              >
-                <PopupChatMessage key={key} message={msg} />
-              </motion.div>
-            );
-          })}
+        {unread.map((msg, key) => {
+          return (
+            <motion.div
+              key={key}
+              initial={{opacity: 0, x: -2}}
+              animate={{opacity: 1, x: 0}}
+              transition={{duration: 0.2, ease: 'easeIn'}}
+            >
+              <PopupChatMessage key={key} message={msg} />
+            </motion.div>
+          );
+        })}
         <div ref={(el) => (this.scrollToEl = el)} />
       </Flex>
     );
