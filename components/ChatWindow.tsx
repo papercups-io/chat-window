@@ -505,7 +505,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         return !isMe;
       })
-      .slice(0, 3); // Only show the first 3 unread messages
+      .slice(0, 2); // Only show the first 2 unread messages
 
     if (unread.length === 0) {
       return null;
