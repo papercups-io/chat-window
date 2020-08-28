@@ -442,7 +442,7 @@ class ChatWindow extends React.Component<Props, State> {
     return !customerId && !previouslySentMessages;
   };
 
-  // TODO: figure out the best way to do this!
+  // TODO: figure out the best way to do this! (this is currently unused)
   renderUnreadMessages() {
     const {isMobile = false} = this.props;
     const {customerId, messages = []} = this.state;
