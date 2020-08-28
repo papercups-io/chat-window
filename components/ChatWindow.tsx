@@ -7,6 +7,10 @@ import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
 import {Message, now} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
+import {
+  isWindowHidden,
+  addVisibilityEventListener,
+} from '../helpers/visibility';
 
 // TODO: set this up somewhere else
 const setup = (w: any, handler: (msg: any) => void) => {
@@ -53,7 +57,7 @@ type State = {
 class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  unsubscribe: () => {};
+  subscriptions: Array<() => void>;
   socket: any;
   channel: any;
 
@@ -75,8 +79,12 @@ class ChatWindow extends React.Component<Props, State> {
   componentDidMount() {
     const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
+    const doc = (document || win.document) as any;
 
-    this.unsubscribe = setup(win, this.postMessageHandlers);
+    this.subscriptions = [
+      setup(win, this.postMessageHandlers),
+      addVisibilityEventListener(doc, this.handleVisibilityChange),
+    ];
 
     const websocketUrl = getWebsocketUrl(baseUrl);
 
@@ -89,7 +97,11 @@ class ChatWindow extends React.Component<Props, State> {
 
   componentWillUnmount() {
     this.channel && this.channel.leave();
-    this.unsubscribe && this.unsubscribe();
+    this.subscriptions.forEach((unsubscribe) => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    });
   }
 
   emit = (event: string, payload?: any) => {
@@ -113,6 +125,24 @@ class ChatWindow extends React.Component<Props, State> {
         return console.debug('Pong!');
       default:
         return null;
+    }
+  };
+
+  // If the page is not visible (i.e. user is looking at another tab),
+  // we want to mark messages as read once the chat widget becomes visible
+  // again, as long as it's open.
+  handleVisibilityChange = (e?: any) => {
+    const doc = document || (e && e.target);
+
+    if (isWindowHidden(doc)) {
+      return;
+    }
+
+    const {messages = []} = this.state;
+    const shouldMarkSeen = messages.some((msg) => this.shouldMarkAsSeen(msg));
+
+    if (shouldMarkSeen) {
+      this.markMessagesAsSeen();
     }
   };
 
@@ -318,7 +348,36 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.setState({messages: updated}, () => {
       this.scrollToEl.scrollIntoView();
+
+      if (this.shouldMarkAsSeen(message)) {
+        this.markMessagesAsSeen();
+      }
     });
+  };
+
+  shouldMarkAsSeen = (message: Message) => {
+    const {isOpen} = this.state;
+    const {user_id: agentId, seen_at: seenAt} = message;
+    const isAgentMessage = !!agentId;
+
+    // If already seen or the page is not visible, don't mark as seen
+    if (seenAt || isWindowHidden(document)) {
+      return false;
+    }
+
+    return isAgentMessage && isOpen;
+  };
+
+  markMessagesAsSeen = () => {
+    const {customerId, conversationId} = this.state;
+
+    if (!this.channel || !customerId || !conversationId) {
+      return;
+    }
+
+    console.debug('Marking messages as seen!');
+
+    this.channel.push('messages:seen', {});
   };
 
   handleSendMessage = async (message: string, email?: string) => {
