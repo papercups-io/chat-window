@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Flex, Heading, Text} from 'theme-ui';
+import {Box, Flex, Heading, Text, Link} from 'theme-ui';
 import {Socket} from 'phoenix';
 import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
@@ -52,6 +52,7 @@ type State = {
   conversationId: string | null;
   isSending: boolean;
   isOpen: boolean;
+  shouldDisplayNotifications: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -73,6 +74,7 @@ class ChatWindow extends React.Component<Props, State> {
       conversationId: null,
       isSending: false,
       isOpen: false,
+      shouldDisplayNotifications: false,
     };
   }
 
@@ -119,8 +121,12 @@ class ChatWindow extends React.Component<Props, State> {
         const {customerId, metadata} = payload;
 
         return this.updateExistingCustomer(customerId, metadata);
+      case 'notifications:display':
+        return this.setState({
+          shouldDisplayNotifications: !!payload.shouldDisplayNotifications,
+        });
       case 'papercups:toggle':
-        return this.setState({isOpen: !!payload.isOpen});
+        return this.handleToggleDisplay(payload);
       case 'papercups:ping':
         return console.debug('Pong!');
       default:
@@ -146,6 +152,18 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
+  handleToggleDisplay = (payload: any = {}) => {
+    const isOpen = !!payload.isOpen;
+
+    this.setState({isOpen}, () => {
+      this.handleVisibilityChange();
+
+      if (isOpen) {
+        this.scrollToEl.scrollIntoView();
+      }
+    });
+  };
+
   getDefaultGreeting = (ts?: number): Array<Message> => {
     const {greeting} = this.props;
 
@@ -159,6 +177,7 @@ class ChatWindow extends React.Component<Props, State> {
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
         created_at: now().toISOString(), // TODO: what should this be?
+        seen_at: now().toISOString(),
       },
     ];
   };
@@ -245,6 +264,16 @@ class ChatWindow extends React.Component<Props, State> {
       this.joinConversationChannel(conversationId, customerId);
 
       await this.updateExistingCustomer(customerId, metadata);
+
+      const unseenMessages = formattedMessages.filter(
+        (msg: Message) => !msg.seen_at && !!msg.user_id
+      );
+
+      if (unseenMessages.length > 0) {
+        const [firstUnseenMessage] = unseenMessages;
+
+        this.emitUnseenMessage(firstUnseenMessage);
+      }
     } catch (err) {
       console.debug('Error fetching conversations!', err);
     }
@@ -332,6 +361,14 @@ class ChatWindow extends React.Component<Props, State> {
     return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
   };
 
+  emitUnseenMessage = (message: Message) => {
+    this.emit('messages:unseen', {message});
+  };
+
+  emitOpenWindow = (e: any) => {
+    this.emit('papercups:open', {});
+  };
+
   handleNewMessage = (message: Message) => {
     this.emit('message:received', {message});
 
@@ -347,10 +384,12 @@ class ChatWindow extends React.Component<Props, State> {
       : [...messages, message];
 
     this.setState({messages: updated}, () => {
-      this.scrollToEl.scrollIntoView();
+      this.scrollToEl && this.scrollToEl.scrollIntoView();
 
       if (this.shouldMarkAsSeen(message)) {
         this.markMessagesAsSeen();
+      } else {
+        this.emitUnseenMessage(message);
       }
     });
   };
@@ -369,7 +408,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   markMessagesAsSeen = () => {
-    const {customerId, conversationId} = this.state;
+    const {customerId, conversationId, messages = []} = this.state;
 
     if (!this.channel || !customerId || !conversationId) {
       return;
@@ -378,6 +417,12 @@ class ChatWindow extends React.Component<Props, State> {
     console.debug('Marking messages as seen!');
 
     this.channel.push('messages:seen', {});
+    this.emit('messages:seen', {});
+    this.setState({
+      messages: messages.map((msg) => {
+        return msg.seen_at ? msg : {...msg, seen_at: new Date().toISOString()};
+      }),
+    });
   };
 
   handleSendMessage = async (message: string, email?: string) => {
@@ -446,20 +491,25 @@ class ChatWindow extends React.Component<Props, State> {
   renderUnreadMessages() {
     const {isMobile = false} = this.props;
     const {customerId, messages = []} = this.state;
-    const unread = messages.filter((msg) => {
-      // TODO: add `seen_at` field, so we know if message was read or not
-      const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
+    const unread = messages
+      .filter((msg) => {
+        const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
 
-      if (seen) {
-        return false;
-      }
+        if (seen) {
+          return false;
+        }
 
-      // NB: `msg.type` doesn't come from the server, it's just a way to
-      // help identify unsent messages in the frontend for now
-      const isMe = cid === customerId || (sentAt && type === 'customer');
+        // NB: `msg.type` doesn't come from the server, it's just a way to
+        // help identify unsent messages in the frontend for now
+        const isMe = cid === customerId || (sentAt && type === 'customer');
 
-      return !isMe;
-    });
+        return !isMe;
+      })
+      .slice(0, 3); // Only show the first 3 unread messages
+
+    if (unread.length === 0) {
+      return null;
+    }
 
     return (
       <Flex
@@ -485,7 +535,10 @@ class ChatWindow extends React.Component<Props, State> {
             </motion.div>
           );
         })}
-        <div ref={(el) => (this.scrollToEl = el)} />
+
+        <Flex mt={2} pr={2} sx={{justifyContent: 'flex-end'}}>
+          <Link onClick={this.emitOpenWindow}>View new messages</Link>
+        </Flex>
       </Flex>
     );
   }
@@ -497,7 +550,18 @@ class ChatWindow extends React.Component<Props, State> {
       newMessagePlaceholder = 'Start typing...',
       isMobile = false,
     } = this.props;
-    const {customerId, messages = [], isSending, isOpen} = this.state;
+    const {
+      customerId,
+      messages = [],
+      isSending,
+      isOpen,
+      shouldDisplayNotifications,
+    } = this.state;
+
+    if (!isOpen && shouldDisplayNotifications) {
+      return this.renderUnreadMessages();
+    }
+
     const shouldAskForEmail = this.askForEmailUpfront();
 
     return (
