@@ -5,7 +5,7 @@ import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message, now} from '../helpers/utils';
+import {Message, now, shorten} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
 import {
   isWindowHidden,
@@ -489,6 +489,8 @@ class ChatWindow extends React.Component<Props, State> {
 
   // TODO: figure out the best way to do this! (this is currently unused)
   renderUnreadMessages() {
+    const MAX_CHARS = 140;
+
     const {isMobile = false} = this.props;
     const {customerId, messages = []} = this.state;
     const unread = messages
@@ -505,11 +507,21 @@ class ChatWindow extends React.Component<Props, State> {
 
         return !isMe;
       })
-      .slice(0, 2); // Only show the first 2 unread messages
+      .slice(0, 2) // Only show the first 2 unread messages
+      .map((msg) => {
+        const {body} = msg;
+
+        return {...msg, body: shorten(body, MAX_CHARS)};
+      });
 
     if (unread.length === 0) {
       return null;
     }
+
+    // If the total number of characters in the previewed messages is more
+    // than the max, only show the first message (rather than two)
+    const chars = unread.reduce((acc, msg) => acc + msg.body.length, 0);
+    const displayed = chars > MAX_CHARS ? unread.slice(0, 1) : unread;
 
     return (
       <Flex
@@ -523,7 +535,7 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        {unread.map((msg, key) => {
+        {displayed.map((msg, key) => {
           return (
             <motion.div
               key={key}
