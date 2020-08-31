@@ -487,7 +487,7 @@ class ChatWindow extends React.Component<Props, State> {
     return !customerId && !previouslySentMessages;
   };
 
-  // TODO: figure out the best way to do this! (this is currently unused)
+  // TODO: make it possible to disable this feature?
   renderUnreadMessages() {
     const MAX_CHARS = 140;
 
