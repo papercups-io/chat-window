@@ -52,6 +52,7 @@ type State = {
   conversationId: string | null;
   isSending: boolean;
   isOpen: boolean;
+  isTransitioning: boolean;
   shouldDisplayNotifications: boolean;
 };
 
@@ -74,6 +75,7 @@ class ChatWindow extends React.Component<Props, State> {
       conversationId: null,
       isSending: false,
       isOpen: false,
+      isTransitioning: false,
       shouldDisplayNotifications: false,
     };
   }
@@ -155,7 +157,7 @@ class ChatWindow extends React.Component<Props, State> {
   handleToggleDisplay = (payload: any = {}) => {
     const isOpen = !!payload.isOpen;
 
-    this.setState({isOpen}, () => {
+    this.setState({isOpen, isTransitioning: false}, () => {
       this.handleVisibilityChange();
 
       if (isOpen) {
@@ -367,7 +369,9 @@ class ChatWindow extends React.Component<Props, State> {
 
   emitOpenWindow = (e: any) => {
     this.emit('papercups:open', {});
-    this.setState({isOpen: true}); // TODO: double check this is ok
+    // This is the state where we are waitin for parent window to reply,
+    // letting us know when the transition from closed to open is over
+    this.setState({isTransitioning: true});
   };
 
   handleNewMessage = (message: Message) => {
@@ -568,8 +572,13 @@ class ChatWindow extends React.Component<Props, State> {
       messages = [],
       isSending,
       isOpen,
+      isTransitioning,
       shouldDisplayNotifications,
     } = this.state;
+
+    if (isTransitioning) {
+      return null; // TODO: need to figure out the best way to handle this
+    }
 
     if (!isOpen && shouldDisplayNotifications) {
       return this.renderUnreadMessages();
