@@ -367,6 +367,7 @@ class ChatWindow extends React.Component<Props, State> {
 
   emitOpenWindow = (e: any) => {
     this.emit('papercups:open', {});
+    this.setState({isOpen: true}); // TODO: double check this is ok
   };
 
   handleNewMessage = (message: Message) => {
