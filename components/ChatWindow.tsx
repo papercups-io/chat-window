@@ -519,9 +519,9 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     // If the total number of characters in the previewed messages is more
-    // than the max, only show the first message (rather than two)
+    // than one hundred (100), only show the first message (rather than two)
     const chars = unread.reduce((acc, msg) => acc + msg.body.length, 0);
-    const displayed = chars > MAX_CHARS ? unread.slice(0, 1) : unread;
+    const displayed = chars > 100 ? unread.slice(0, 1) : unread;
 
     return (
       <Flex
