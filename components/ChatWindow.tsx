@@ -1,12 +1,16 @@
 import React from 'react';
-import {Box, Flex, Heading, Text} from 'theme-ui';
+import {Box, Flex, Heading, Text, Link} from 'theme-ui';
 import {Socket} from 'phoenix';
 import {motion} from 'framer-motion';
-import ChatMessage from './ChatMessage';
+import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message, now} from '../helpers/utils';
+import {Message, now, shorten} from '../helpers/utils';
 import {getWebsocketUrl} from '../helpers/config';
+import {
+  isWindowHidden,
+  addVisibilityEventListener,
+} from '../helpers/visibility';
 
 // TODO: set this up somewhere else
 const setup = (w: any, handler: (msg: any) => void) => {
@@ -48,12 +52,13 @@ type State = {
   conversationId: string | null;
   isSending: boolean;
   isOpen: boolean;
+  shouldDisplayNotifications: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  unsubscribe: () => {};
+  subscriptions: Array<() => void>;
   socket: any;
   channel: any;
 
@@ -69,14 +74,19 @@ class ChatWindow extends React.Component<Props, State> {
       conversationId: null,
       isSending: false,
       isOpen: false,
+      shouldDisplayNotifications: false,
     };
   }
 
   componentDidMount() {
     const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
+    const doc = (document || win.document) as any;
 
-    this.unsubscribe = setup(win, this.postMessageHandlers);
+    this.subscriptions = [
+      setup(win, this.postMessageHandlers),
+      addVisibilityEventListener(doc, this.handleVisibilityChange),
+    ];
 
     const websocketUrl = getWebsocketUrl(baseUrl);
 
@@ -89,7 +99,11 @@ class ChatWindow extends React.Component<Props, State> {
 
   componentWillUnmount() {
     this.channel && this.channel.leave();
-    this.unsubscribe && this.unsubscribe();
+    this.subscriptions.forEach((unsubscribe) => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    });
   }
 
   emit = (event: string, payload?: any) => {
@@ -107,13 +121,47 @@ class ChatWindow extends React.Component<Props, State> {
         const {customerId, metadata} = payload;
 
         return this.updateExistingCustomer(customerId, metadata);
+      case 'notifications:display':
+        return this.setState({
+          shouldDisplayNotifications: !!payload.shouldDisplayNotifications,
+        });
       case 'papercups:toggle':
-        return this.setState({isOpen: !!payload.isOpen});
+        return this.handleToggleDisplay(payload);
       case 'papercups:ping':
         return console.debug('Pong!');
       default:
         return null;
     }
+  };
+
+  // If the page is not visible (i.e. user is looking at another tab),
+  // we want to mark messages as read once the chat widget becomes visible
+  // again, as long as it's open.
+  handleVisibilityChange = (e?: any) => {
+    const doc = document || (e && e.target);
+
+    if (isWindowHidden(doc)) {
+      return;
+    }
+
+    const {messages = []} = this.state;
+    const shouldMarkSeen = messages.some((msg) => this.shouldMarkAsSeen(msg));
+
+    if (shouldMarkSeen) {
+      this.markMessagesAsSeen();
+    }
+  };
+
+  handleToggleDisplay = (payload: any = {}) => {
+    const isOpen = !!payload.isOpen;
+
+    this.setState({isOpen}, () => {
+      this.handleVisibilityChange();
+
+      if (isOpen) {
+        this.scrollToEl.scrollIntoView();
+      }
+    });
   };
 
   getDefaultGreeting = (ts?: number): Array<Message> => {
@@ -129,6 +177,7 @@ class ChatWindow extends React.Component<Props, State> {
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
         created_at: now().toISOString(), // TODO: what should this be?
+        seen_at: now().toISOString(),
       },
     ];
   };
@@ -215,6 +264,16 @@ class ChatWindow extends React.Component<Props, State> {
       this.joinConversationChannel(conversationId, customerId);
 
       await this.updateExistingCustomer(customerId, metadata);
+
+      const unseenMessages = formattedMessages.filter(
+        (msg: Message) => !msg.seen_at && !!msg.user_id
+      );
+
+      if (unseenMessages.length > 0) {
+        const [firstUnseenMessage] = unseenMessages;
+
+        this.emitUnseenMessage(firstUnseenMessage);
+      }
     } catch (err) {
       console.debug('Error fetching conversations!', err);
     }
@@ -302,6 +361,14 @@ class ChatWindow extends React.Component<Props, State> {
     return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
   };
 
+  emitUnseenMessage = (message: Message) => {
+    this.emit('messages:unseen', {message});
+  };
+
+  emitOpenWindow = (e: any) => {
+    this.emit('papercups:open', {});
+  };
+
   handleNewMessage = (message: Message) => {
     this.emit('message:received', {message});
 
@@ -317,7 +384,44 @@ class ChatWindow extends React.Component<Props, State> {
       : [...messages, message];
 
     this.setState({messages: updated}, () => {
-      this.scrollToEl.scrollIntoView();
+      this.scrollToEl && this.scrollToEl.scrollIntoView();
+
+      if (this.shouldMarkAsSeen(message)) {
+        this.markMessagesAsSeen();
+      } else {
+        this.emitUnseenMessage(message);
+      }
+    });
+  };
+
+  shouldMarkAsSeen = (message: Message) => {
+    const {isOpen} = this.state;
+    const {user_id: agentId, seen_at: seenAt} = message;
+    const isAgentMessage = !!agentId;
+
+    // If already seen or the page is not visible, don't mark as seen
+    if (seenAt || isWindowHidden(document)) {
+      return false;
+    }
+
+    return isAgentMessage && isOpen;
+  };
+
+  markMessagesAsSeen = () => {
+    const {customerId, conversationId, messages = []} = this.state;
+
+    if (!this.channel || !customerId || !conversationId) {
+      return;
+    }
+
+    console.debug('Marking messages as seen!');
+
+    this.channel.push('messages:seen', {});
+    this.emit('messages:seen', {});
+    this.setState({
+      messages: messages.map((msg) => {
+        return msg.seen_at ? msg : {...msg, seen_at: new Date().toISOString()};
+      }),
     });
   };
 
@@ -383,6 +487,74 @@ class ChatWindow extends React.Component<Props, State> {
     return !customerId && !previouslySentMessages;
   };
 
+  // TODO: make it possible to disable this feature?
+  renderUnreadMessages() {
+    const MAX_CHARS = 140;
+
+    const {isMobile = false} = this.props;
+    const {customerId, messages = []} = this.state;
+    const unread = messages
+      .filter((msg) => {
+        const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
+
+        if (seen) {
+          return false;
+        }
+
+        // NB: `msg.type` doesn't come from the server, it's just a way to
+        // help identify unsent messages in the frontend for now
+        const isMe = cid === customerId || (sentAt && type === 'customer');
+
+        return !isMe;
+      })
+      .slice(0, 2) // Only show the first 2 unread messages
+      .map((msg) => {
+        const {body} = msg;
+
+        return {...msg, body: shorten(body, MAX_CHARS)};
+      });
+
+    if (unread.length === 0) {
+      return null;
+    }
+
+    // If the total number of characters in the previewed messages is more
+    // than one hundred (100), only show the first message (rather than two)
+    const chars = unread.reduce((acc, msg) => acc + msg.body.length, 0);
+    const displayed = chars > 100 ? unread.slice(0, 1) : unread;
+
+    return (
+      <Flex
+        className={isMobile ? 'Mobile' : ''}
+        sx={{
+          bg: 'transparent',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          height: '100%',
+          width: '100%',
+          flex: 1,
+        }}
+      >
+        {displayed.map((msg, key) => {
+          return (
+            <motion.div
+              key={key}
+              initial={{opacity: 0, x: -2}}
+              animate={{opacity: 1, x: 0}}
+              transition={{duration: 0.2, ease: 'easeIn'}}
+            >
+              <PopupChatMessage key={key} message={msg} />
+            </motion.div>
+          );
+        })}
+
+        <Flex mt={2} pr={2} sx={{justifyContent: 'flex-end'}}>
+          <Link onClick={this.emitOpenWindow}>View new messages</Link>
+        </Flex>
+      </Flex>
+    );
+  }
+
   render() {
     const {
       title = 'Welcome!',
@@ -390,7 +562,18 @@ class ChatWindow extends React.Component<Props, State> {
       newMessagePlaceholder = 'Start typing...',
       isMobile = false,
     } = this.props;
-    const {customerId, messages = [], isSending, isOpen} = this.state;
+    const {
+      customerId,
+      messages = [],
+      isSending,
+      isOpen,
+      shouldDisplayNotifications,
+    } = this.state;
+
+    if (!isOpen && shouldDisplayNotifications) {
+      return this.renderUnreadMessages();
+    }
+
     const shouldAskForEmail = this.askForEmailUpfront();
 
     return (

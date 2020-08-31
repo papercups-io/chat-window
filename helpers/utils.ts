@@ -10,6 +10,7 @@ export type Message = {
   id?: string;
   body: string;
   sent_at?: string;
+  seen_at?: string;
   created_at?: string;
   customer_id?: string;
   user_id?: number;
@@ -33,4 +34,14 @@ export function now() {
 
 export function sleep(ms: number) {
   return new Promise((res) => setTimeout(res, ms));
+}
+
+// Returns the words (or whatever substrings based on the `separator`)
+// in a string up until the point of meeting the`max` character limit
+export function shorten(str: string, max: number, separator = ' ') {
+  if (str.length <= max) {
+    return str;
+  }
+
+  return str.substr(0, str.lastIndexOf(separator, max)).concat('...');
 }

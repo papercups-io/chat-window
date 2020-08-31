@@ -129,6 +129,13 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       },
       a: {
         color: 'primary',
+        userSelect: 'none',
+        '&:hover': {
+          color: overrides.light,
+        },
+        '&:active': {
+          color: overrides.dark,
+        },
       },
       pre: {
         fontFamily: 'monospace',
