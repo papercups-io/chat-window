@@ -80,7 +80,7 @@ class ChatWindow extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
     const doc = (document || win.document) as any;
@@ -95,7 +95,8 @@ class ChatWindow extends React.Component<Props, State> {
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
 
-    this.fetchLatestConversation(customerId, metadata);
+    await this.fetchLatestConversation(customerId, metadata);
+
     this.emit('chat:loaded');
   }
 
@@ -200,7 +201,9 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: matchingCustomerId,
     } = await API.findCustomerByExternalId(externalId, accountId, baseUrl);
 
-    if (!matchingCustomerId || matchingCustomerId === defaultCustomerId) {
+    if (!matchingCustomerId) {
+      return null;
+    } else if (matchingCustomerId === defaultCustomerId) {
       return defaultCustomerId;
     }
 
