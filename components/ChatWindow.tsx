@@ -189,7 +189,7 @@ class ChatWindow extends React.Component<Props, State> {
       this.handleVisibilityChange();
 
       if (isOpen) {
-        this.scrollToEl.scrollIntoView();
+        this.scrollToEl.scrollIntoView(false);
       }
     });
   };
@@ -386,7 +386,7 @@ class ChatWindow extends React.Component<Props, State> {
       });
 
     this.emit('conversation:join', {conversationId, customerId});
-    this.scrollToEl.scrollIntoView();
+    this.scrollToEl.scrollIntoView(false);
   };
 
   areDatesEqual = (x: string, y: string) => {
@@ -419,7 +419,7 @@ class ChatWindow extends React.Component<Props, State> {
       : [...messages, message];
 
     this.setState({messages: updated}, () => {
-      this.scrollToEl && this.scrollToEl.scrollIntoView();
+      this.scrollToEl && this.scrollToEl.scrollIntoView(false);
 
       if (this.shouldMarkAsSeen(message)) {
         this.markMessagesAsSeen();
@@ -480,7 +480,7 @@ class ChatWindow extends React.Component<Props, State> {
       {
         messages: [...this.state.messages, payload],
       },
-      () => this.scrollToEl.scrollIntoView()
+      () => this.scrollToEl.scrollIntoView(false)
     );
 
     if (!customerId || !conversationId) {
