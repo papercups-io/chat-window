@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex, Heading, Text, Link} from 'theme-ui';
-import {Socket} from 'phoenix';
+import {Socket, Presence} from 'phoenix';
 import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
@@ -44,12 +44,16 @@ type Props = {
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
   customer?: API.CustomerMetadata;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
+  showAgentAvailability?: boolean;
 };
 
 type State = {
   messages: Array<Message>;
   customerId: string;
   conversationId: string | null;
+  availableAgents: Array<any>;
   isSending: boolean;
   isOpen: boolean;
   isTransitioning: boolean;
@@ -72,6 +76,7 @@ class ChatWindow extends React.Component<Props, State> {
       // (eventually we will probably use cookies for this)
       // TODO: remove this from state if possible, just use props instead?
       customerId: props.customerId,
+      availableAgents: [],
       conversationId: null,
       isSending: false,
       isOpen: false,
@@ -358,6 +363,21 @@ class ChatWindow extends React.Component<Props, State> {
         console.debug('Unable to join!', err);
       });
 
+    const presence = new Presence(this.channel);
+
+    presence.onSync(() => {
+      this.setState({
+        availableAgents: presence
+          .list()
+          .map(({metas}) => {
+            const [info] = metas;
+
+            return info;
+          })
+          .filter((info) => !!info.user_id),
+      });
+    });
+
     this.emit('conversation:join', {conversationId, customerId});
     this.scrollToEl.scrollIntoView();
   };
@@ -568,11 +588,15 @@ class ChatWindow extends React.Component<Props, State> {
       title = 'Welcome!',
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
+      agentAvailableText = "We're online right now!",
+      agentUnavailableText = "We're away at the moment.",
       isMobile = false,
+      showAgentAvailability = false,
     } = this.props;
     const {
       customerId,
       messages = [],
+      availableAgents = [],
       isSending,
       isOpen,
       isTransitioning,
@@ -588,6 +612,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     const shouldAskForEmail = this.askForEmailUpfront();
+    const hasAvailableAgents = availableAgents.length > 0;
 
     return (
       <Flex
@@ -600,15 +625,43 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        <Box py={3} px={4} sx={{bg: 'primary'}}>
-          <Heading
-            as="h2"
-            className="Papercups-heading"
-            sx={{color: 'background', my: 1}}
-          >
-            {title}
-          </Heading>
-          <Text sx={{color: 'offset'}}>{subtitle}</Text>
+        <Box sx={{bg: 'primary'}}>
+          <Box pt={3} pb={showAgentAvailability ? 12 : 16} px={20}>
+            <Heading
+              as="h2"
+              className="Papercups-heading"
+              sx={{color: 'background', my: 1}}
+            >
+              {title}
+            </Heading>
+            <Text sx={{color: 'offset'}}>{subtitle}</Text>
+          </Box>
+
+          {showAgentAvailability && (
+            <Flex
+              px={20}
+              py={1}
+              sx={{
+                bg: 'lighter',
+                borderTop: '1px solid rgba(230, 230, 230, 0.25)',
+                alignItems: 'center',
+              }}
+            >
+              <Box
+                mr={2}
+                sx={{
+                  height: 8,
+                  width: 8,
+                  bg: hasAvailableAgents ? 'green' : 'muted',
+                  border: '1px solid #fff',
+                  borderRadius: '50%',
+                }}
+              ></Box>
+              <Text sx={{color: 'offset', fontSize: 12}}>
+                {hasAvailableAgents ? agentAvailableText : agentUnavailableText}
+              </Text>
+            </Flex>
+          )}
         </Box>
         <Box
           p={3}

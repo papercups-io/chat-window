@@ -35,7 +35,10 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       text: '#141414',
       background: '#fff',
       primary: overrides.primary,
+      darker: overrides.dark,
+      lighter: overrides.light,
       secondary: '#722ed1',
+      green: '#52c41a',
       muted: '#f0f0f0',
       gray: 'rgba(0, 0, 0, 0.45)',
       // TODO: come up with better names!
