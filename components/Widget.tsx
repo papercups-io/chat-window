@@ -13,6 +13,9 @@ type Config = {
   greeting?: string;
   customerId?: string;
   newMessagePlaceholder?: string;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
+  showAgentAvailability?: boolean;
   defaultIsOpen?: boolean;
   requireEmailUpfront?: boolean;
   mobile?: boolean;
@@ -59,6 +62,9 @@ const sanitizeConfigPayload = (payload: any): Config => {
     baseUrl,
     greeting,
     newMessagePlaceholder,
+    agentAvailableText,
+    agentUnavailableText,
+    showAgentAvailability,
   } = payload;
 
   return {
@@ -69,6 +75,9 @@ const sanitizeConfigPayload = (payload: any): Config => {
     baseUrl,
     greeting,
     newMessagePlaceholder,
+    agentAvailableText,
+    agentUnavailableText,
+    showAgentAvailability,
   };
 };
 
@@ -112,18 +121,22 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     accountId,
     customerId,
     greeting,
+    agentAvailableText,
+    agentUnavailableText,
     title = 'Welcome!',
     subtitle = 'How can we help you?',
     newMessagePlaceholder = 'Start typing...',
     primaryColor = '1890ff',
     baseUrl = 'https://app.papercups.io',
     requireEmailUpfront = '0',
+    showAgentAvailability = '0',
     mobile = '0',
     metadata = '{}',
   } = config;
 
   const shouldRequireEmail = !!Number(requireEmailUpfront);
   const isMobile = !!Number(mobile);
+  const shouldHideAvailability = !!Number(showAgentAvailability);
   const theme = getThemeConfig({primary: primaryColor});
   const customer = parseCustomerMetadata(metadata);
 
@@ -136,6 +149,9 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         customerId={customerId}
         greeting={greeting}
         newMessagePlaceholder={newMessagePlaceholder}
+        agentAvailableText={agentAvailableText}
+        agentUnavailableText={agentUnavailableText}
+        showAgentAvailability={shouldHideAvailability}
         shouldRequireEmail={shouldRequireEmail}
         isMobile={isMobile}
         baseUrl={baseUrl}
