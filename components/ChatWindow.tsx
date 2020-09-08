@@ -366,6 +366,8 @@ class ChatWindow extends React.Component<Props, State> {
     const presence = new Presence(this.channel);
 
     presence.onSync(() => {
+      console.debug('Syncing presence:', presence.list());
+
       this.setState({
         availableAgents: presence
           .list()
