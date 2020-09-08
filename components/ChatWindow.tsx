@@ -99,6 +99,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
+    this.listenForAgentAvailability();
 
     await this.fetchLatestConversation(customerId, metadata);
 
@@ -140,6 +141,37 @@ class ChatWindow extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  listenForAgentAvailability = () => {
+    const {accountId} = this.props;
+    const room = this.socket.channel(`room:${accountId}`, {});
+
+    room
+      .join()
+      .receive('ok', (res: any) => {
+        console.debug('Joined room successfully!', res);
+      })
+      .receive('error', (err: any) => {
+        console.debug('Unable to join room!', err);
+      });
+
+    const presence = new Presence(room);
+
+    presence.onSync(() => {
+      console.debug('Syncing presence:', presence.list());
+
+      this.setState({
+        availableAgents: presence
+          .list()
+          .map(({metas}) => {
+            const [info] = metas;
+
+            return info;
+          })
+          .filter((info) => !!info.user_id),
+      });
+    });
   };
 
   // If the page is not visible (i.e. user is looking at another tab),
@@ -357,36 +389,11 @@ class ChatWindow extends React.Component<Props, State> {
     this.channel
       .join()
       .receive('ok', (res: any) => {
-        console.debug('Joined successfully!', res);
+        console.debug('Joined conversation successfully!', res);
       })
       .receive('error', (err: any) => {
-        console.debug('Unable to join!', err);
+        console.debug('Unable to join conversation!', err);
       });
-
-    const presence = new Presence(this.channel);
-
-    presence.onSync(() => {
-      console.debug('Syncing presence:', presence.list());
-
-      this.setState({
-        availableAgents: presence
-          .list()
-          .map(({metas}) => {
-            const [info] = metas;
-
-            return info;
-          })
-          .filter((info) => !!info.user_id),
-      });
-    });
-
-    this.channel.on('presence_state', (state: any) => {
-      console.debug('Presence state:', state);
-    });
-
-    this.channel.on('presence_diff', (diff: any) => {
-      console.debug('Presence diff:', diff);
-    });
 
     this.emit('conversation:join', {conversationId, customerId});
     this.scrollToEl.scrollIntoView();
