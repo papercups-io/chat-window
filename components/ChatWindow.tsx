@@ -380,6 +380,14 @@ class ChatWindow extends React.Component<Props, State> {
       });
     });
 
+    this.channel.on('presence_state', (state: any) => {
+      console.debug('Presence state:', state);
+    });
+
+    this.channel.on('presence_diff', (diff: any) => {
+      console.debug('Presence diff:', diff);
+    });
+
     this.emit('conversation:join', {conversationId, customerId});
     this.scrollToEl.scrollIntoView();
   };
