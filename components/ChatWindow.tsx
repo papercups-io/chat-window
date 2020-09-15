@@ -44,6 +44,7 @@ type Props = {
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
   customer?: API.CustomerMetadata;
+  companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
   showAgentAvailability?: boolean;
@@ -607,6 +608,7 @@ class ChatWindow extends React.Component<Props, State> {
       newMessagePlaceholder = 'Start typing...',
       agentAvailableText = "We're online right now!",
       agentUnavailableText = "We're away at the moment.",
+      companyName,
       isMobile = false,
       showAgentAvailability = false,
     } = this.props;
@@ -712,6 +714,7 @@ class ChatWindow extends React.Component<Props, State> {
                   key={key}
                   message={msg}
                   isMe={isMe}
+                  companyName={companyName}
                   isLastInGroup={isLastInGroup}
                   shouldDisplayTimestamp={shouldDisplayTimestamp}
                 />

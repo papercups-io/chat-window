@@ -72,7 +72,7 @@ const SenderAvatar = ({
     <Flex
       mr={2}
       sx={{
-        bg: isBot ? 'gray' : 'primary',
+        bg: isBot ? 'lighter' : 'primary',
         height: 32,
         width: 32,
         borderRadius: '50%',
@@ -81,7 +81,7 @@ const SenderAvatar = ({
         color: '#fff',
       }}
     >
-      {isBot ? (
+      {isBot && name.toLowerCase() === 'bot' ? (
         <BotIcon fill="background" height={16} width={16} />
       ) : (
         name.slice(0, 1).toUpperCase()
@@ -94,12 +94,14 @@ type Props = {
   message: Message;
   isMe?: boolean;
   isLastInGroup?: boolean;
+  companyName?: string;
   shouldDisplayTimestamp?: boolean;
 };
 
 const ChatMessage = ({
   message,
   isMe,
+  companyName,
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
@@ -107,7 +109,8 @@ const ChatMessage = ({
   const created = created_at ? dayjs.utc(created_at) : null;
   const timestamp = created ? formatRelativeTime(created) : null;
   const isBot = type === 'bot';
-  const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
+  const defaultBotName = companyName || 'Bot';
+  const identifer = isBot ? defaultBotName : getAgentIdentifier(user);
 
   if (isMe) {
     return (

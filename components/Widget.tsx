@@ -13,6 +13,7 @@ type Config = {
   greeting?: string;
   customerId?: string;
   newMessagePlaceholder?: string;
+  companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
   showAgentAvailability?: boolean;
@@ -61,6 +62,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     primaryColor,
     baseUrl,
     greeting,
+    companyName,
     newMessagePlaceholder,
     agentAvailableText,
     agentUnavailableText,
@@ -74,6 +76,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     primaryColor,
     baseUrl,
     greeting,
+    companyName,
     newMessagePlaceholder,
     agentAvailableText,
     agentUnavailableText,
@@ -121,6 +124,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
     accountId,
     customerId,
     greeting,
+    companyName,
     agentAvailableText,
     agentUnavailableText,
     title = 'Welcome!',
@@ -148,6 +152,7 @@ const Wrapper = ({config: defaultConfig}: Props) => {
         accountId={accountId}
         customerId={customerId}
         greeting={greeting}
+        companyName={companyName}
         newMessagePlaceholder={newMessagePlaceholder}
         agentAvailableText={agentAvailableText}
         agentUnavailableText={agentUnavailableText}
