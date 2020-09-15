@@ -6,6 +6,7 @@ export type CustomerMetadata = {
   name: string;
   email: string;
   external_id: string;
+  metadata?: {[key: string]: any};
   // TODO: include browser info
 };
 
