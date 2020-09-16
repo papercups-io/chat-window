@@ -416,7 +416,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   handleNewMessage = (message: Message) => {
-    this.emit('message:received', {message});
+    this.emit('message:received', message);
 
     const {messages = []} = this.state;
     const unsent = messages.find(
@@ -509,6 +509,8 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: this.state.customerId,
       sent_at: sentAt,
     });
+
+    this.emit('message:sent', payload);
   };
 
   // If this is true, we don't allow the customer to send any messages
