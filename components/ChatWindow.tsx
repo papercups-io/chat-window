@@ -5,33 +5,18 @@ import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import * as API from '../helpers/api';
-import {Message, now, shorten} from '../helpers/utils';
-import {getWebsocketUrl} from '../helpers/config';
+import {
+  Message,
+  now,
+  shorten,
+  setupPostMessageHandlers,
+} from '../helpers/utils';
+import {isDev, getWebsocketUrl} from '../helpers/config';
+import Logger from '../helpers/logger';
 import {
   isWindowHidden,
   addVisibilityEventListener,
 } from '../helpers/visibility';
-
-// TODO: set this up somewhere else
-const setup = (w: any, handler: (msg: any) => void) => {
-  console.debug('Setting up!');
-
-  const cb = (msg: any) => {
-    console.debug('Received message!', msg);
-
-    handler(msg);
-  };
-
-  if (w.addEventListener) {
-    w.addEventListener('message', cb);
-
-    return () => w.removeEventListener('message', cb);
-  } else {
-    w.attachEvent('onmessage', cb);
-
-    return () => w.detachEvent('message', cb);
-  }
-};
 
 type Props = {
   accountId: string;
@@ -67,6 +52,7 @@ class ChatWindow extends React.Component<Props, State> {
   subscriptions: Array<() => void>;
   socket: any;
   channel: any;
+  logger: Logger;
 
   constructor(props: Props) {
     super(props);
@@ -90,9 +76,12 @@ class ChatWindow extends React.Component<Props, State> {
     const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
     const doc = (document || win.document) as any;
+    // TODO: make it possible to opt into debug mode
+    const debugModeEnabled = isDev(win);
 
+    this.logger = new Logger(debugModeEnabled);
     this.subscriptions = [
-      setup(win, this.postMessageHandlers),
+      setupPostMessageHandlers(win, this.postMessageHandlers),
       addVisibilityEventListener(doc, this.handleVisibilityChange),
     ];
 
@@ -117,14 +106,14 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   emit = (event: string, payload?: any) => {
-    console.debug('Sending event from iframe:', {event, payload});
+    this.logger.debug('Sending event from iframe:', {event, payload});
 
     parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
 
   postMessageHandlers = (msg: any) => {
     const {event, payload = {}} = msg.data;
-    console.debug('Handling in iframe:', msg.data);
+    this.logger.debug('Handling in iframe:', msg.data);
 
     switch (event) {
       case 'customer:update':
@@ -138,7 +127,7 @@ class ChatWindow extends React.Component<Props, State> {
       case 'papercups:toggle':
         return this.handleToggleDisplay(payload);
       case 'papercups:ping':
-        return console.debug('Pong!');
+        return this.logger.debug('Pong!');
       default:
         return null;
     }
@@ -151,16 +140,16 @@ class ChatWindow extends React.Component<Props, State> {
     room
       .join()
       .receive('ok', (res: any) => {
-        console.debug('Joined room successfully!', res);
+        this.logger.debug('Joined room successfully!', res);
       })
       .receive('error', (err: any) => {
-        console.debug('Unable to join room!', err);
+        this.logger.debug('Unable to join room!', err);
       });
 
     const presence = new Presence(room);
 
     presence.onSync(() => {
-      console.debug('Syncing presence:', presence.list());
+      this.logger.debug('Syncing presence:', presence.list());
 
       this.setState({
         availableAgents: presence
@@ -273,7 +262,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     const {accountId, baseUrl} = this.props;
 
-    console.debug('Fetching conversations for customer:', customerId);
+    this.logger.debug('Fetching conversations for customer:', customerId);
 
     try {
       const conversations = await API.fetchCustomerConversations(
@@ -282,7 +271,7 @@ class ChatWindow extends React.Component<Props, State> {
         baseUrl
       );
 
-      console.debug('Found existing conversations:', conversations);
+      this.logger.debug('Found existing conversations:', conversations);
 
       if (!conversations || !conversations.length) {
         // If there are no conversations yet, wait until the customer creates
@@ -318,7 +307,7 @@ class ChatWindow extends React.Component<Props, State> {
         this.emitUnseenMessage(firstUnseenMessage);
       }
     } catch (err) {
-      console.debug('Error fetching conversations!', err);
+      this.logger.debug('Error fetching conversations!', err);
     }
   };
 
@@ -351,7 +340,7 @@ class ChatWindow extends React.Component<Props, State> {
 
       await API.updateCustomerMetadata(customerId, metadata, baseUrl);
     } catch (err) {
-      console.debug('Error updating customer metadata!', err);
+      this.logger.debug('Error updating customer metadata!', err);
     }
   };
 
@@ -376,7 +365,7 @@ class ChatWindow extends React.Component<Props, State> {
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
-    console.debug('Joining channel:', conversationId);
+    this.logger.debug('Joining channel:', conversationId);
 
     this.channel = this.socket.channel(`conversation:${conversationId}`, {
       customer_id: customerId,
@@ -390,10 +379,10 @@ class ChatWindow extends React.Component<Props, State> {
     this.channel
       .join()
       .receive('ok', (res: any) => {
-        console.debug('Joined conversation successfully!', res);
+        this.logger.debug('Joined conversation successfully!', res);
       })
       .receive('error', (err: any) => {
-        console.debug('Unable to join conversation!', err);
+        this.logger.debug('Unable to join conversation!', err);
       });
 
     this.emit('conversation:join', {conversationId, customerId});
@@ -460,7 +449,7 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    console.debug('Marking messages as seen!');
+    this.logger.debug('Marking messages as seen!');
 
     this.channel.push('messages:seen', {});
     this.emit('messages:seen', {});
