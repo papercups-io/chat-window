@@ -2,7 +2,10 @@ import React from 'react';
 import {ThemeProvider} from 'theme-ui';
 import ChatWindow from './ChatWindow';
 import {CustomerMetadata} from '../helpers/api';
+import {isDev} from '../helpers/config';
+import {setupPostMessageHandlers} from '../helpers/utils';
 import getThemeConfig from '../helpers/theme';
+import Logger from '../helpers/logger';
 
 type Config = {
   title?: string;
@@ -21,25 +24,6 @@ type Config = {
   requireEmailUpfront?: boolean;
   mobile?: boolean;
   metadata?: string; // stringified CustomerMetadata JSON
-};
-
-// TODO: DRY up with ChatWindow handlers
-const setup = (w: any, handler: (msg: any) => void) => {
-  const cb = (msg: any) => {
-    console.debug('Received message!', msg);
-
-    handler(msg);
-  };
-
-  if (w.addEventListener) {
-    w.addEventListener('message', cb);
-
-    return () => w.removeEventListener('message', cb);
-  } else {
-    w.attachEvent('onmessage', cb);
-
-    return () => w.detachEvent('message', cb);
-  }
 };
 
 const parseCustomerMetadata = (str: string): CustomerMetadata => {
@@ -84,86 +68,106 @@ const sanitizeConfigPayload = (payload: any): Config => {
   };
 };
 
-type Props = {
-  config: Config;
-};
+type Props = {config: Config};
+type State = {config: Config};
 
-const Wrapper = ({config: defaultConfig}: Props) => {
-  console.debug('Widget default config:', defaultConfig);
-  const [config, setConfig] = React.useState(defaultConfig);
+class WrapperV2 extends React.Component<Props, State> {
+  logger: Logger;
+  unsubscribe: () => void;
 
-  React.useEffect(() => {
-    const unsubscribe = setup(window, handlers);
+  constructor(props: Props) {
+    super(props);
 
-    return () => unsubscribe();
-  }, []);
-
-  function handleConfigUpdate(payload) {
-    const updates = sanitizeConfigPayload(payload);
-
-    setConfig({...config, ...updates});
+    this.state = {
+      config: props.config,
+    };
   }
 
-  function handlers(msg: any) {
-    console.debug('Handling in wrapper:', msg.data);
+  componentDidMount() {
+    const debugModeEnabled = isDev(window);
+
+    this.logger = new Logger(debugModeEnabled);
+    this.unsubscribe = setupPostMessageHandlers(
+      window,
+      this.postMessageHandlers
+    );
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe && this.unsubscribe();
+  }
+
+  postMessageHandlers = (msg: any) => {
+    this.logger.debug('Handling in wrapper:', msg.data);
     const {event, payload = {}} = msg.data;
 
     switch (event) {
       case 'config:update':
-        return handleConfigUpdate(payload);
+        return this.handleConfigUpdate(payload);
       default:
         return null;
     }
+  };
+
+  handleConfigUpdate = (payload: any) => {
+    const updates = sanitizeConfigPayload(payload);
+    this.logger.debug('Updating widget config:', updates);
+
+    this.setState({config: {...this.state.config, ...updates}});
+  };
+
+  render() {
+    const {config = {}} = this.state;
+
+    if (Object.keys(config).length === 0) {
+      return null;
+    }
+
+    const {
+      accountId,
+      customerId,
+      greeting,
+      companyName,
+      agentAvailableText,
+      agentUnavailableText,
+      title = 'Welcome!',
+      subtitle = 'How can we help you?',
+      newMessagePlaceholder = 'Start typing...',
+      primaryColor = '1890ff',
+      baseUrl = 'https://app.papercups.io',
+      requireEmailUpfront = '0',
+      showAgentAvailability = '0',
+      mobile = '0',
+      metadata = '{}',
+    } = config;
+
+    const shouldRequireEmail = !!Number(requireEmailUpfront);
+    const isMobile = !!Number(mobile);
+    const shouldHideAvailability = !!Number(showAgentAvailability);
+    const theme = getThemeConfig({primary: primaryColor});
+    const customer = parseCustomerMetadata(metadata);
+
+    return (
+      <ThemeProvider theme={theme}>
+        <ChatWindow
+          title={title}
+          subtitle={subtitle}
+          accountId={accountId}
+          customerId={customerId}
+          greeting={greeting}
+          companyName={companyName}
+          newMessagePlaceholder={newMessagePlaceholder}
+          agentAvailableText={agentAvailableText}
+          agentUnavailableText={agentUnavailableText}
+          showAgentAvailability={shouldHideAvailability}
+          shouldRequireEmail={shouldRequireEmail}
+          isMobile={isMobile}
+          baseUrl={baseUrl}
+          customer={customer}
+        />
+      </ThemeProvider>
+    );
   }
+}
 
-  if (Object.keys(config).length === 0) {
-    return null;
-  }
-
-  const {
-    accountId,
-    customerId,
-    greeting,
-    companyName,
-    agentAvailableText,
-    agentUnavailableText,
-    title = 'Welcome!',
-    subtitle = 'How can we help you?',
-    newMessagePlaceholder = 'Start typing...',
-    primaryColor = '1890ff',
-    baseUrl = 'https://app.papercups.io',
-    requireEmailUpfront = '0',
-    showAgentAvailability = '0',
-    mobile = '0',
-    metadata = '{}',
-  } = config;
-
-  const shouldRequireEmail = !!Number(requireEmailUpfront);
-  const isMobile = !!Number(mobile);
-  const shouldHideAvailability = !!Number(showAgentAvailability);
-  const theme = getThemeConfig({primary: primaryColor});
-  const customer = parseCustomerMetadata(metadata);
-
-  return (
-    <ThemeProvider theme={theme}>
-      <ChatWindow
-        title={title}
-        subtitle={subtitle}
-        accountId={accountId}
-        customerId={customerId}
-        greeting={greeting}
-        companyName={companyName}
-        newMessagePlaceholder={newMessagePlaceholder}
-        agentAvailableText={agentAvailableText}
-        agentUnavailableText={agentUnavailableText}
-        showAgentAvailability={shouldHideAvailability}
-        shouldRequireEmail={shouldRequireEmail}
-        isMobile={isMobile}
-        baseUrl={baseUrl}
-        customer={customer}
-      />
-    </ThemeProvider>
-  );
-};
-
-export default Wrapper;
+export default WrapperV2;

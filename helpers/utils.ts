@@ -45,3 +45,19 @@ export function shorten(str: string, max: number, separator = ' ') {
 
   return str.substr(0, str.lastIndexOf(separator, max)).concat('...');
 }
+
+export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
+  const cb = (msg: any) => {
+    handler(msg);
+  };
+
+  if (w.addEventListener) {
+    w.addEventListener('message', cb);
+
+    return () => w.removeEventListener('message', cb);
+  } else {
+    w.attachEvent('onmessage', cb);
+
+    return () => w.detachEvent('message', cb);
+  }
+}
