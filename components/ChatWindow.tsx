@@ -78,7 +78,7 @@ class ChatWindow extends React.Component<Props, State> {
     const doc = (document || win.document) as any;
     const debugModeEnabled = isDev(win);
 
-    this.logger = new Logger(debugModeEnabled && false);
+    this.logger = new Logger(debugModeEnabled);
     this.subscriptions = [
       setupPostMessageHandlers(win, this.postMessageHandlers),
       addVisibilityEventListener(doc, this.handleVisibilityChange),
