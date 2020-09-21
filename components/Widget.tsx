@@ -85,7 +85,7 @@ class WrapperV2 extends React.Component<Props, State> {
 
   componentDidMount() {
     const debugModeEnabled = isDev(window);
-    console.info('Debug mode enabled?', debugModeEnabled, window);
+
     this.logger = new Logger(debugModeEnabled);
     this.unsubscribe = setupPostMessageHandlers(
       window,

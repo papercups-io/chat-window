@@ -77,7 +77,7 @@ class ChatWindow extends React.Component<Props, State> {
     const win = window as any;
     const doc = (document || win.document) as any;
     const debugModeEnabled = isDev(win);
-    console.info('Debug mode enabled?', debugModeEnabled, win);
+
     this.logger = new Logger(debugModeEnabled);
     this.subscriptions = [
       setupPostMessageHandlers(win, this.postMessageHandlers),
