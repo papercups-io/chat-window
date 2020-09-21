@@ -84,6 +84,7 @@ class WrapperV2 extends React.Component<Props, State> {
   }
 
   componentDidMount() {
+    // TODO: make it possible to opt into debug mode
     const debugModeEnabled = isDev(window);
 
     this.logger = new Logger(debugModeEnabled);

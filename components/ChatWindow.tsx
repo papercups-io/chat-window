@@ -76,6 +76,7 @@ class ChatWindow extends React.Component<Props, State> {
     const {baseUrl, customerId, customer: metadata} = this.props;
     const win = window as any;
     const doc = (document || win.document) as any;
+    // TODO: make it possible to opt into debug mode
     const debugModeEnabled = isDev(win);
 
     this.logger = new Logger(debugModeEnabled);
