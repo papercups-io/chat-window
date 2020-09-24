@@ -13,6 +13,7 @@ export type Message = {
   seen_at?: string;
   created_at?: string;
   customer_id?: string;
+  conversation_id?: string;
   user_id?: number;
   user?: User;
   type?: 'bot' | 'agent' | 'customer';

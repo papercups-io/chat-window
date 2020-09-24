@@ -499,7 +499,14 @@ class ChatWindow extends React.Component<Props, State> {
       sent_at: sentAt,
     });
 
-    this.emit('message:sent', payload);
+    // TODO: should this only be emitted after the message is successfully sent?
+    this.emit('message:sent', {
+      body: message,
+      type: 'customer',
+      sent_at: sentAt,
+      customer_id: this.state.customerId,
+      conversation_id: this.state.conversationId,
+    });
   };
 
   // If this is true, we don't allow the customer to send any messages
