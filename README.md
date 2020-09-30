@@ -1,30 +1,23 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Papercups Chat
+
+This repo contains the code for the chat window that is rendered in an iframe in the [Papercups chat widget](https://github.com/papercups-io/chat-widget). (See https://github.com/papercups-io/chat-widget for more details.)
+
+For a demo of all of this in action, visit https://app.papercups.io/demo
 
 ## Getting Started
 
-First, run the development server:
+Run the development server with:
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will start the app at [http://localhost:8080](http://localhost:8080).
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+You can start editing the page by modifying the components in the `/components` directory. The page auto-updates as you edit the file.
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+You'll notice when you start up the code from scratch that nothing gets rendered initially. This is because this component requires certain query params to be set in order to render.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+The easiest way to develop within this repo is by running it alongside the [@papercups-io/chat-widget](https://github.com/papercups-io/chat-widget) repo. See the instructions there for more information: https://github.com/papercups-io/chat-widget
