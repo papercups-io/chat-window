@@ -44,6 +44,7 @@ type State = {
   isOpen: boolean;
   isTransitioning: boolean;
   shouldDisplayNotifications: boolean;
+  shouldDisplayBranding: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -69,6 +70,7 @@ class ChatWindow extends React.Component<Props, State> {
       isOpen: false,
       isTransitioning: false,
       shouldDisplayNotifications: false,
+      shouldDisplayBranding: false,
     };
   }
 
@@ -618,6 +620,7 @@ class ChatWindow extends React.Component<Props, State> {
       isOpen,
       isTransitioning,
       shouldDisplayNotifications,
+      shouldDisplayBranding,
     } = this.state;
 
     if (isTransitioning) {
@@ -721,6 +724,23 @@ class ChatWindow extends React.Component<Props, State> {
           })}
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
+        {shouldDisplayBranding && (
+          <Flex m={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
+            <Link
+              href="https://papercups.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'gray',
+                opacity: 0.8,
+                transition: '0.2s',
+                '&:hover': {opacity: 1},
+              }}
+            >
+              Powered by Papercups
+            </Link>
+          </Flex>
+        )}
         <Box
           px={2}
           sx={{
