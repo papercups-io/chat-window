@@ -128,6 +128,8 @@ class ChatWindow extends React.Component<Props, State> {
         });
       case 'papercups:toggle':
         return this.handleToggleDisplay(payload);
+      case 'papercups:plan':
+        return this.handlePapercupsPlan(payload);
       case 'papercups:ping':
         return this.logger.debug('Pong!');
       default:
@@ -182,6 +184,17 @@ class ChatWindow extends React.Component<Props, State> {
     if (shouldMarkSeen) {
       this.markMessagesAsSeen();
     }
+  };
+
+  handlePapercupsPlan = (payload: any = {}) => {
+    this.logger.debug('Handling subscription plan:', payload);
+
+    const plan = payload && payload.plan;
+    const shouldDisplayBranding = plan
+      ? String(plan).toLowerCase() === 'starter'
+      : false;
+
+    this.setState({shouldDisplayBranding});
   };
 
   handleToggleDisplay = (payload: any = {}) => {
