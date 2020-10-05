@@ -740,7 +740,7 @@ class ChatWindow extends React.Component<Props, State> {
         {shouldDisplayBranding && (
           <Flex m={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
             <Link
-              href="https://papercups.io"
+              href="https://papercups.io?utm_source=papercups&utm_medium=chat&utm_campaign=chat-widget-link"
               target="_blank"
               rel="noopener noreferrer"
               sx={{
