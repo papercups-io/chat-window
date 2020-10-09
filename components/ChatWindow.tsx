@@ -594,9 +594,9 @@ class ChatWindow extends React.Component<Props, State> {
             border: 'none',
             boxShadow: 'none',
           }}
-          initial={{opacity: 0, y: 4}}
+          initial={{opacity: 0, y: 2}}
           animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.6, ease: 'easeIn'}}
+          transition={{duration: 0.4, ease: 'easeIn'}}
           onLoad={this.handleGameLoaded}
         />
         <Flex
