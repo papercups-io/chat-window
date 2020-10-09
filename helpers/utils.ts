@@ -47,6 +47,17 @@ export function shorten(str: string, max: number, separator = ' ') {
   return str.substr(0, str.lastIndexOf(separator, max)).concat('...');
 }
 
+export function shouldActivateGameMode(message: string) {
+  return (
+    [
+      '/play2048',
+      '/xyzzy',
+      '/poweroverwhelming',
+      '/howdoyouturnthison',
+    ].indexOf(message) !== -1
+  );
+}
+
 export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
   const cb = (msg: any) => {
     handler(msg);
