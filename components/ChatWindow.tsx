@@ -397,7 +397,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.on('shout', (message: any) => {
-      this.handleNewMessage(message);
+      this.setState({isGameMode: false}, () => this.handleNewMessage(message));
     });
 
     this.channel
@@ -561,6 +561,12 @@ class ChatWindow extends React.Component<Props, State> {
     return !customerId && !previouslySentMessages;
   };
 
+  handleGameLoaded = (e: any) => {
+    if (e.currentTarget && e.currentTarget.focus) {
+      e.currentTarget.focus();
+    }
+  };
+
   handleLeaveGameMode = () => {
     this.setState({isGameMode: false}, () => this.scrollIntoView());
   };
@@ -591,6 +597,7 @@ class ChatWindow extends React.Component<Props, State> {
           initial={{opacity: 0, y: 4}}
           animate={{opacity: 1, y: 0}}
           transition={{duration: 0.6, ease: 'easeIn'}}
+          onLoad={this.handleGameLoaded}
         />
         <Flex
           p={3}
@@ -599,7 +606,11 @@ class ChatWindow extends React.Component<Props, State> {
             boxShadow: 'inset rgba(35, 47, 53, 0.09) 0px 2px 8px 0px',
           }}
         >
-          <Button variant="primary" onClick={this.handleLeaveGameMode}>
+          <Button
+            variant="primary"
+            sx={{width: '100%'}}
+            onClick={this.handleLeaveGameMode}
+          >
             Back to chat
           </Button>
         </Flex>

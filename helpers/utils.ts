@@ -48,13 +48,19 @@ export function shorten(str: string, max: number, separator = ' ') {
 }
 
 export function shouldActivateGameMode(message: string) {
+  if (!message || !message.length) {
+    return false;
+  }
+
   return (
     [
       '/play2048',
       '/xyzzy',
       '/poweroverwhelming',
       '/howdoyouturnthison',
-    ].indexOf(message) !== -1
+      'what is 2^11',
+      'what is 2^11?',
+    ].indexOf(message.toLowerCase()) !== -1
   );
 }
 
