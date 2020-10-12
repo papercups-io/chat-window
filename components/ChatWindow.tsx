@@ -54,7 +54,7 @@ type State = {
 class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  subscriptions: Array<() => void>;
+  subscriptions: Array<() => void> = [];
   socket: any;
   channel: any;
   logger: Logger;
