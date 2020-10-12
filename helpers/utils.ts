@@ -47,6 +47,25 @@ export function shorten(str: string, max: number, separator = ' ') {
   return str.substr(0, str.lastIndexOf(separator, max)).concat('...');
 }
 
+export function shouldActivateGameMode(message: string) {
+  if (!message || !message.length) {
+    return false;
+  }
+
+  return (
+    [
+      '/play2048',
+      '/xyzzy',
+      '/poweroverwhelming',
+      '/howdoyouturnthison',
+      'what is 2^11',
+      'what is 2^11?',
+      "what's 2^11",
+      "what's 2^11?",
+    ].indexOf(message.toLowerCase()) !== -1
+  );
+}
+
 export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
   const cb = (msg: any) => {
     handler(msg);

@@ -1,14 +1,17 @@
 import React from 'react';
-import {Box, Flex, Heading, Text, Link} from 'theme-ui';
+import {Box, Button, Flex, Heading, Text, Link} from 'theme-ui';
 import {Socket, Presence} from 'phoenix';
 import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
+import AgentAvailability from './AgentAvailability';
+import PapercupsBranding from './PapercupsBranding';
 import * as API from '../helpers/api';
 import {
   Message,
   now,
   shorten,
+  shouldActivateGameMode,
   setupPostMessageHandlers,
 } from '../helpers/utils';
 import {isDev, getWebsocketUrl} from '../helpers/config';
@@ -43,6 +46,7 @@ type State = {
   isSending: boolean;
   isOpen: boolean;
   isTransitioning: boolean;
+  isGameMode?: boolean;
   shouldDisplayNotifications: boolean;
   shouldDisplayBranding: boolean;
 };
@@ -69,6 +73,7 @@ class ChatWindow extends React.Component<Props, State> {
       isSending: false,
       isOpen: false,
       isTransitioning: false,
+      isGameMode: false,
       shouldDisplayNotifications: false,
       shouldDisplayBranding: false,
     };
@@ -168,6 +173,10 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
+  scrollIntoView = () => {
+    this.scrollToEl && this.scrollToEl.scrollIntoView(false);
+  };
+
   // If the page is not visible (i.e. user is looking at another tab),
   // we want to mark messages as read once the chat widget becomes visible
   // again, as long as it's open.
@@ -204,7 +213,7 @@ class ChatWindow extends React.Component<Props, State> {
       this.handleVisibilityChange();
 
       if (isOpen) {
-        this.scrollToEl.scrollIntoView(false);
+        this.scrollIntoView();
       }
     });
   };
@@ -388,7 +397,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.on('shout', (message: any) => {
-      this.handleNewMessage(message);
+      this.setState({isGameMode: false}, () => this.handleNewMessage(message));
     });
 
     this.channel
@@ -401,7 +410,7 @@ class ChatWindow extends React.Component<Props, State> {
       });
 
     this.emit('conversation:join', {conversationId, customerId});
-    this.scrollToEl.scrollIntoView(false);
+    this.scrollIntoView();
   };
 
   areDatesEqual = (x: string, y: string) => {
@@ -434,7 +443,7 @@ class ChatWindow extends React.Component<Props, State> {
       : [...messages, message];
 
     this.setState({messages: updated}, () => {
-      this.scrollToEl && this.scrollToEl.scrollIntoView(false);
+      this.scrollIntoView();
 
       if (this.shouldMarkAsSeen(message)) {
         this.markMessagesAsSeen();
@@ -482,6 +491,12 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
+    if (shouldActivateGameMode(message)) {
+      this.setState({isGameMode: true});
+
+      return;
+    }
+
     const sentAt = new Date().toISOString();
     // TODO: figure out how this should work if `customerId` is null
     const payload: Message = {
@@ -495,7 +510,7 @@ class ChatWindow extends React.Component<Props, State> {
       {
         messages: [...this.state.messages, payload],
       },
-      () => this.scrollToEl.scrollIntoView(false)
+      () => this.scrollIntoView()
     );
 
     if (!customerId || !conversationId) {
@@ -545,6 +560,63 @@ class ChatWindow extends React.Component<Props, State> {
 
     return !customerId && !previouslySentMessages;
   };
+
+  handleGameLoaded = (e: any) => {
+    if (e.currentTarget && e.currentTarget.focus) {
+      e.currentTarget.focus();
+    }
+  };
+
+  handleLeaveGameMode = () => {
+    this.setState({isGameMode: false}, () => this.scrollIntoView());
+  };
+
+  renderEmbeddedGame() {
+    const {isMobile = false} = this.props;
+
+    return (
+      <Flex
+        className={isMobile ? 'Mobile' : ''}
+        sx={{
+          bg: 'background',
+          flexDirection: 'column',
+          height: '100%',
+          width: '100%',
+          flex: 1,
+        }}
+      >
+        <motion.iframe
+          src={`https://reichert621.github.io/?v=1`}
+          sandbox="allow-same-origin allow-scripts allow-top-navigation"
+          style={{
+            height: '100%',
+            width: '100%',
+            border: 'none',
+            boxShadow: 'none',
+          }}
+          initial={{opacity: 0, y: 2}}
+          animate={{opacity: 1, y: 0}}
+          transition={{duration: 0.4, ease: 'easeIn'}}
+          onLoad={this.handleGameLoaded}
+        />
+        <Flex
+          p={3}
+          sx={{
+            justifyContent: 'center',
+            boxShadow: 'inset rgba(35, 47, 53, 0.09) 0px 2px 8px 0px',
+          }}
+        >
+          <Button
+            variant="primary"
+            sx={{width: '100%'}}
+            onClick={this.handleLeaveGameMode}
+          >
+            Back to chat
+          </Button>
+        </Flex>
+      </Flex>
+    );
+  }
 
   // TODO: make it possible to disable this feature?
   renderUnreadMessages() {
@@ -632,9 +704,14 @@ class ChatWindow extends React.Component<Props, State> {
       isSending,
       isOpen,
       isTransitioning,
+      isGameMode,
       shouldDisplayNotifications,
       shouldDisplayBranding,
     } = this.state;
+
+    if (isGameMode) {
+      return this.renderEmbeddedGame();
+    }
 
     if (isTransitioning) {
       return null; // TODO: need to figure out the best way to handle this
@@ -671,31 +748,14 @@ class ChatWindow extends React.Component<Props, State> {
           </Box>
 
           {showAgentAvailability && (
-            <Flex
-              px={20}
-              py={1}
-              sx={{
-                bg: 'lighter',
-                borderTop: '1px solid rgba(230, 230, 230, 0.25)',
-                alignItems: 'center',
-              }}
-            >
-              <Box
-                mr={2}
-                sx={{
-                  height: 8,
-                  width: 8,
-                  bg: hasAvailableAgents ? 'green' : 'muted',
-                  border: '1px solid #fff',
-                  borderRadius: '50%',
-                }}
-              ></Box>
-              <Text sx={{color: 'offset', fontSize: 12}}>
-                {hasAvailableAgents ? agentAvailableText : agentUnavailableText}
-              </Text>
-            </Flex>
+            <AgentAvailability
+              hasAvailableAgents={hasAvailableAgents}
+              agentAvailableText={agentAvailableText}
+              agentUnavailableText={agentUnavailableText}
+            />
           )}
         </Box>
+
         <Box
           p={3}
           sx={{
@@ -737,23 +797,7 @@ class ChatWindow extends React.Component<Props, State> {
           })}
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
-        {shouldDisplayBranding && (
-          <Flex m={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
-            <Link
-              href="https://papercups.io?utm_source=papercups&utm_medium=chat&utm_campaign=chat-widget-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                color: 'gray',
-                opacity: 0.8,
-                transition: '0.2s',
-                '&:hover': {opacity: 1},
-              }}
-            >
-              Powered by Papercups
-            </Link>
-          </Flex>
-        )}
+        {shouldDisplayBranding && <PapercupsBranding />}
         <Box
           px={2}
           sx={{
