@@ -447,7 +447,9 @@ class ChatWindow extends React.Component<Props, State> {
 
       if (this.shouldMarkAsSeen(message)) {
         this.markMessagesAsSeen();
-      } else {
+      } else if (!unsent) {
+        // If the message was not `unsent`, we know it came from the other end,
+        // in which case we should indicate that it hasn't been seen yet.
         this.emitUnseenMessage(message);
       }
     });
