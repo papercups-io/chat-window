@@ -60,6 +60,8 @@ export function shouldActivateGameMode(message: string) {
       '/howdoyouturnthison',
       'what is 2^11',
       'what is 2^11?',
+      "what's 2^11",
+      "what's 2^11?",
     ].indexOf(message.toLowerCase()) !== -1
   );
 }
