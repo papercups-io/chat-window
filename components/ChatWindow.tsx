@@ -723,6 +723,10 @@ class ChatWindow extends React.Component<Props, State> {
       return this.renderUnreadMessages();
     }
 
+    if (!isOpen) {
+      return null;
+    }
+
     const shouldAskForEmail = this.askForEmailUpfront();
     const hasAvailableAgents = availableAgents.length > 0;
 
