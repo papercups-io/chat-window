@@ -696,6 +696,7 @@ class ChatWindow extends React.Component<Props, State> {
       agentAvailableText = "We're online right now!",
       agentUnavailableText = "We're away at the moment.",
       companyName,
+      accountId,
       isMobile = false,
       showAgentAvailability = false,
     } = this.props;
@@ -723,7 +724,9 @@ class ChatWindow extends React.Component<Props, State> {
       return this.renderUnreadMessages();
     }
 
-    if (!isOpen) {
+    // FIXME: only return null for versions of the chat-widget after v1.1.0
+    // (For now just hardcoding the affected account)
+    if (!isOpen && accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
       return null;
     }
 

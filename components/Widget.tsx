@@ -71,7 +71,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
 type Props = {config: Config};
 type State = {config: Config};
 
-class WrapperV2 extends React.Component<Props, State> {
+class Wrapper extends React.Component<Props, State> {
   logger: Logger;
   unsubscribe: () => void;
 
@@ -171,4 +171,4 @@ class WrapperV2 extends React.Component<Props, State> {
   }
 }
 
-export default WrapperV2;
+export default Wrapper;
