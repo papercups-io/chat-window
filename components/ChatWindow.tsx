@@ -588,7 +588,7 @@ class ChatWindow extends React.Component<Props, State> {
         }}
       >
         <motion.iframe
-          src={`https://reichert621.github.io/?v=1`}
+          src={`https://reichert621.github.io/?v=2`}
           sandbox="allow-same-origin allow-scripts allow-top-navigation"
           style={{
             flex: 1,
