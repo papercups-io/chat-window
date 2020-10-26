@@ -62,3 +62,16 @@ body {
 .Text--white a {
   color: #fff;
 }
+
+.CloseIcon {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.CloseIcon:hover {
+  opacity: 1;
+}

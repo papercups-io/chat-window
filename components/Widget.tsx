@@ -22,8 +22,10 @@ type Config = {
   showAgentAvailability?: boolean;
   defaultIsOpen?: boolean;
   requireEmailUpfront?: boolean;
+  closeable?: boolean;
   mobile?: boolean;
   metadata?: string; // stringified CustomerMetadata JSON
+  version?: string;
 };
 
 const parseCustomerMetadata = (str: string): CustomerMetadata => {
@@ -51,6 +53,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
+    closeable,
+    version,
   } = payload;
 
   return {
@@ -65,6 +69,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
+    closeable,
+    version,
   };
 };
 
@@ -138,12 +144,15 @@ class Wrapper extends React.Component<Props, State> {
       baseUrl = 'https://app.papercups.io',
       requireEmailUpfront = '0',
       showAgentAvailability = '0',
+      closeable = '1',
       mobile = '0',
       metadata = '{}',
+      version = '1.0.0',
     } = config;
 
     const shouldRequireEmail = !!Number(requireEmailUpfront);
     const isMobile = !!Number(mobile);
+    const isCloseable = !!Number(closeable);
     const shouldHideAvailability = !!Number(showAgentAvailability);
     const theme = getThemeConfig({primary: primaryColor});
     const customer = parseCustomerMetadata(metadata);
@@ -163,8 +172,10 @@ class Wrapper extends React.Component<Props, State> {
           showAgentAvailability={shouldHideAvailability}
           shouldRequireEmail={shouldRequireEmail}
           isMobile={isMobile}
+          isCloseable={isCloseable}
           baseUrl={baseUrl}
           customer={customer}
+          version={version}
         />
       </ThemeProvider>
     );
