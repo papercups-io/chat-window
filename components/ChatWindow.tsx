@@ -6,6 +6,7 @@ import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import AgentAvailability from './AgentAvailability';
 import PapercupsBranding from './PapercupsBranding';
+import CloseIcon from './CloseIcon';
 import * as API from '../helpers/api';
 import {
   Message,
@@ -36,6 +37,8 @@ type Props = {
   agentAvailableText?: string;
   agentUnavailableText?: string;
   showAgentAvailability?: boolean;
+  isCloseable?: boolean;
+  version?: string;
 };
 
 type State = {
@@ -101,6 +104,11 @@ class ChatWindow extends React.Component<Props, State> {
     await this.fetchLatestConversation(customerId, metadata);
 
     this.emit('chat:loaded');
+
+    if (this.isOnDeprecatedVersion()) {
+      console.warn('You are currently on a deprecated version of Papercups.');
+      console.warn('Please upgrade to version 1.1.2 or above.');
+    }
   }
 
   componentWillUnmount() {
@@ -423,9 +431,13 @@ class ChatWindow extends React.Component<Props, State> {
 
   emitOpenWindow = (e: any) => {
     this.emit('papercups:open', {});
-    // This is the state where we are waitin for parent window to reply,
+    // This is the state where we are waiting for parent window to reply,
     // letting us know when the transition from closed to open is over
     this.setState({isTransitioning: true});
+  };
+
+  emitCloseWindow = (e: any) => {
+    this.emit('papercups:close', {});
   };
 
   handleNewMessage = (message: Message) => {
@@ -573,6 +585,17 @@ class ChatWindow extends React.Component<Props, State> {
     this.setState({isGameMode: false}, () => this.scrollIntoView());
   };
 
+  isOnDeprecatedVersion = (): boolean => {
+    const {accountId, version = '1.0.0'} = this.props;
+
+    // TODO: remove after testing
+    if (accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
+      return false;
+    }
+
+    return version < '1.1.1';
+  };
+
   renderEmbeddedGame() {
     const {isMobile = false} = this.props;
 
@@ -696,8 +719,8 @@ class ChatWindow extends React.Component<Props, State> {
       agentAvailableText = "We're online right now!",
       agentUnavailableText = "We're away at the moment.",
       companyName,
-      accountId,
       isMobile = false,
+      isCloseable = true,
       showAgentAvailability = false,
     } = this.props;
     const {
@@ -725,8 +748,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     // FIXME: only return null for versions of the chat-widget after v1.1.0
-    // (For now just hardcoding the affected account)
-    if (!isOpen && accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
+    if (!isOpen && !this.isOnDeprecatedVersion()) {
       return null;
     }
 
@@ -744,12 +766,21 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        <Box sx={{bg: 'primary'}}>
+        <Box sx={{bg: 'primary', position: 'relative'}}>
           <Box pt={3} pb={showAgentAvailability ? 12 : 16} px={20}>
+            {/* TODO: wrap in a button element */}
+            {isCloseable && !this.isOnDeprecatedVersion() && (
+              <CloseIcon
+                className="CloseIcon"
+                width={24}
+                height={24}
+                onClick={this.emitCloseWindow}
+              />
+            )}
             <Heading
               as="h2"
               className="Papercups-heading"
-              sx={{color: 'background', my: 1}}
+              sx={{color: 'background', my: 1, mr: 12}}
             >
               {title}
             </Heading>
