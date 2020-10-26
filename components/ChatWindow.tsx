@@ -593,7 +593,7 @@ class ChatWindow extends React.Component<Props, State> {
       return false;
     }
 
-    return version < '1.1.1';
+    return version < '1.1.2';
   };
 
   renderEmbeddedGame() {
