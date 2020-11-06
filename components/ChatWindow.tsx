@@ -670,7 +670,7 @@ class ChatWindow extends React.Component<Props, State> {
     const {customerId, messages = []} = this.state;
     const unread = messages
       .filter((msg) => {
-        const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
+        const {seen_at: seen} = msg;
 
         if (seen) {
           return false;
