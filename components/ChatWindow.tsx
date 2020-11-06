@@ -343,16 +343,22 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  createNewCustomerId = async (accountId: string, email?: string) => {
+  createOrUpdateCustomer = async (
+    accountId: string,
+    existingCustomerId?: string,
+    email?: string
+  ): Promise<string> => {
     const {baseUrl, customer} = this.props;
     const metadata = email ? {...customer, email} : customer;
-    const {id: customerId} = await API.createNewCustomer(
-      accountId,
-      metadata,
-      baseUrl
-    );
+    const record = existingCustomerId
+      ? await API.updateCustomerMetadata(existingCustomerId, metadata, baseUrl)
+      : await API.createNewCustomer(accountId, metadata, baseUrl);
 
-    this.emit('customer:created', {customerId});
+    const {id: customerId} = record;
+
+    if (!existingCustomerId) {
+      this.emit('customer:created', {customerId});
+    }
 
     return customerId;
   };
@@ -376,10 +382,16 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  initializeNewConversation = async (email?: string) => {
+  initializeNewConversation = async (
+    existingCustomerId?: string,
+    email?: string
+  ) => {
     const {accountId, baseUrl} = this.props;
-
-    const customerId = await this.createNewCustomerId(accountId, email);
+    const customerId = await this.createOrUpdateCustomer(
+      accountId,
+      existingCustomerId,
+      email
+    );
     const {id: conversationId} = await API.createNewConversation(
       accountId,
       customerId,
@@ -419,6 +431,13 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.emit('conversation:join', {conversationId, customerId});
     this.scrollIntoView();
+  };
+
+  isCustomerMessage = (message: Message, customerId: string): boolean => {
+    return (
+      message.customer_id === customerId ||
+      (message.sent_at && message.type === 'customer')
+    );
   };
 
   areDatesEqual = (x: string, y: string) => {
@@ -528,7 +547,7 @@ class ChatWindow extends React.Component<Props, State> {
     );
 
     if (!customerId || !conversationId) {
-      await this.initializeNewConversation(email);
+      await this.initializeNewConversation(customerId, email);
     }
 
     // We should never hit this block, just adding to satisfy TypeScript
@@ -568,11 +587,11 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     // TODO: figure out what this actual logic should be...
-    const previouslySentMessages = messages.find(
-      (msg) => msg.customer_id === customerId
+    const previouslySentMessages = messages.find((msg) =>
+      this.isCustomerMessage(msg, customerId)
     );
 
-    return !customerId && !previouslySentMessages;
+    return !previouslySentMessages;
   };
 
   handleGameLoaded = (e: any) => {
@@ -659,7 +678,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         // NB: `msg.type` doesn't come from the server, it's just a way to
         // help identify unsent messages in the frontend for now
-        const isMe = cid === customerId || (sentAt && type === 'customer');
+        const isMe = this.isCustomerMessage(msg, customerId);
 
         return !isMe;
       })
@@ -813,9 +832,7 @@ class ChatWindow extends React.Component<Props, State> {
             const shouldDisplayTimestamp = key === messages.length - 1;
             // NB: `msg.type` doesn't come from the server, it's just a way to
             // help identify unsent messages in the frontend for now
-            const isMe =
-              msg.customer_id === customerId ||
-              (msg.sent_at && msg.type === 'customer');
+            const isMe = this.isCustomerMessage(msg, customerId);
 
             return (
               <motion.div
