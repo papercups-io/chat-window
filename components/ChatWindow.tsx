@@ -283,11 +283,10 @@ class ChatWindow extends React.Component<Props, State> {
 
       return isValidCustomer;
     } catch (err) {
-      // TODO: figure out if this causes issues for self-hosted users
-      this.logger.error('Failed to validate customer ID.');
-      this.logger.error('You might be on an older version of Papercups.');
-
-      return false;
+      this.logger.warn('Failed to validate customer ID.');
+      this.logger.warn('You might be on an older version of Papercups.');
+      // Return true for backwards compatibility
+      return true;
     }
   };
 
