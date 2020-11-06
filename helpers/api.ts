@@ -30,6 +30,19 @@ export const createNewCustomer = async (
     .then((res) => res.body.data);
 };
 
+export const isValidCustomer = async (
+  customerId: string,
+  accountId: string,
+  baseUrl = DEFAULT_BASE_URL
+) => {
+  return request
+    .get(`${baseUrl}/api/customers/${customerId}/exists`)
+    .query({
+      account_id: accountId,
+    })
+    .then((res) => res.body.data);
+};
+
 export const updateCustomerMetadata = async (
   customerId: string,
   metadata: CustomerMetadata = EMPTY_METADATA,

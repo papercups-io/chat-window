@@ -70,7 +70,7 @@ class ChatWindow extends React.Component<Props, State> {
       // TODO: figure out how to determine these, either by IP or localStorage
       // (eventually we will probably use cookies for this)
       // TODO: remove this from state if possible, just use props instead?
-      customerId: props.customerId,
+      customerId: null,
       availableAgents: [],
       conversationId: null,
       isSending: false,
@@ -83,13 +83,22 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
-    const {baseUrl, customerId, customer: metadata} = this.props;
+    const {
+      baseUrl,
+      customerId: cachedCustomerId,
+      customer: metadata,
+    } = this.props;
     const win = window as any;
     const doc = (document || win.document) as any;
     // TODO: make it possible to opt into debug mode
     const debugModeEnabled = isDev(win);
 
     this.logger = new Logger(debugModeEnabled);
+
+    const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
+    const customerId = isValidCustomer ? cachedCustomerId : null;
+
+    this.setState({customerId});
     this.subscriptions = [
       setupPostMessageHandlers(win, this.postMessageHandlers),
       addVisibilityEventListener(doc, this.handleVisibilityChange),
@@ -244,13 +253,52 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
+  isValidUuid = (id: string) => {
+    if (!id || !id.length) {
+      return false;
+    }
+
+    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    return regex.test(id);
+  };
+
+  isValidCustomer = async (customerId?: string | null) => {
+    if (!customerId || !customerId.length) {
+      return false;
+    }
+
+    if (!this.isValidUuid(customerId)) {
+      return false;
+    }
+
+    const {baseUrl, accountId} = this.props;
+
+    try {
+      const isValidCustomer = await API.isValidCustomer(
+        customerId,
+        accountId,
+        baseUrl
+      );
+
+      return isValidCustomer;
+    } catch (err) {
+      this.logger.warn('Failed to validate customer ID.');
+      this.logger.warn('You might be on an older version of Papercups.');
+      // Return true for backwards compatibility
+      return true;
+    }
+  };
+
   // Check if we have a matching customer based on the `external_id` provided
   // in the customer metadata. Otherwise, fallback to the cached customer id.
   checkForExistingCustomer = async (
     metadata?: API.CustomerMetadata,
-    defaultCustomerId?: string
-  ) => {
+    defaultCustomerId?: string | null
+  ): Promise<string | null> => {
     if (!metadata || !metadata?.external_id) {
+      this.setState({customerId: defaultCustomerId});
+
       return defaultCustomerId;
     }
 
@@ -261,22 +309,27 @@ class ChatWindow extends React.Component<Props, State> {
     } = await API.findCustomerByExternalId(externalId, accountId, baseUrl);
 
     if (!matchingCustomerId) {
+      this.setState({customerId: null});
+
       return null;
     } else if (matchingCustomerId === defaultCustomerId) {
+      this.setState({customerId: defaultCustomerId});
+
       return defaultCustomerId;
+    } else {
+      this.setState({customerId: matchingCustomerId});
+      // Emit update so we can cache the ID in the parent window
+      this.emit('customer:updated', {customerId: matchingCustomerId});
+
+      return matchingCustomerId;
     }
-
-    this.setState({customerId: matchingCustomerId});
-    this.emit('customer:updated', {customerId: matchingCustomerId});
-
-    return matchingCustomerId;
   };
 
   // Check if we've seen this customer before; if we have, try to fetch
   // the latest existing conversation for that customer. Otherwise, we wait
   // until the customer initiates the first message to create the conversation.
   fetchLatestConversation = async (
-    cachedCustomerId?: string,
+    cachedCustomerId?: string | null,
     metadata?: API.CustomerMetadata
   ) => {
     const customerId = await this.checkForExistingCustomer(
