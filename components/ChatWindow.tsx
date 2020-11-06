@@ -403,17 +403,38 @@ class ChatWindow extends React.Component<Props, State> {
   ): Promise<string> => {
     const {baseUrl, customer} = this.props;
     const metadata = email ? {...customer, email} : customer;
-    const record = existingCustomerId
-      ? await API.updateCustomerMetadata(existingCustomerId, metadata, baseUrl)
-      : await API.createNewCustomer(accountId, metadata, baseUrl);
 
-    const {id: customerId} = record;
+    try {
+      const {id: customerId} = existingCustomerId
+        ? await API.updateCustomerMetadata(
+            existingCustomerId,
+            metadata,
+            baseUrl
+          )
+        : await API.createNewCustomer(accountId, metadata, baseUrl);
 
-    if (!existingCustomerId) {
+      if (!existingCustomerId) {
+        this.emit('customer:created', {customerId});
+      }
+
+      return customerId;
+    } catch (err) {
+      // TODO: this edge case may occur if the cached customer ID somehow
+      // gets messed up (e.g. between dev and prod environments). The long term
+      // fix should be changing the cache key for different environments.
+      this.logger.error('Failed to update or create customer:', err);
+      this.logger.error('Retrying...');
+
+      const {id: customerId} = await API.createNewCustomer(
+        accountId,
+        metadata,
+        baseUrl
+      );
+
       this.emit('customer:created', {customerId});
-    }
 
-    return customerId;
+      return customerId;
+    }
   };
 
   // Updates the customer with metadata fields like `name`, `email`, `external_id`
