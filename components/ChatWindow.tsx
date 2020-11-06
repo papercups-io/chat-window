@@ -70,7 +70,7 @@ class ChatWindow extends React.Component<Props, State> {
       // TODO: figure out how to determine these, either by IP or localStorage
       // (eventually we will probably use cookies for this)
       // TODO: remove this from state if possible, just use props instead?
-      customerId: props.customerId,
+      customerId: null,
       availableAgents: [],
       conversationId: null,
       isSending: false,
@@ -83,13 +83,22 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
-    const {baseUrl, customerId, customer: metadata} = this.props;
+    const {
+      baseUrl,
+      customerId: cachedCustomerId,
+      customer: metadata,
+    } = this.props;
     const win = window as any;
     const doc = (document || win.document) as any;
     // TODO: make it possible to opt into debug mode
     const debugModeEnabled = isDev(win);
 
     this.logger = new Logger(debugModeEnabled);
+
+    const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
+    const customerId = isValidCustomer ? cachedCustomerId : null;
+
+    this.setState({customerId});
     this.subscriptions = [
       setupPostMessageHandlers(win, this.postMessageHandlers),
       addVisibilityEventListener(doc, this.handleVisibilityChange),
@@ -244,13 +253,52 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
+  isValidUuid = (id: string) => {
+    if (!id || !id.length) {
+      return false;
+    }
+
+    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    return regex.test(id);
+  };
+
+  isValidCustomer = async (customerId?: string | null) => {
+    if (!customerId || !customerId.length) {
+      return false;
+    }
+
+    if (!this.isValidUuid(customerId)) {
+      return false;
+    }
+
+    const {baseUrl, accountId} = this.props;
+
+    try {
+      const isValidCustomer = await API.isValidCustomer(
+        customerId,
+        accountId,
+        baseUrl
+      );
+
+      return isValidCustomer;
+    } catch (err) {
+      this.logger.warn('Failed to validate customer ID.');
+      this.logger.warn('You might be on an older version of Papercups.');
+      // Return true for backwards compatibility
+      return true;
+    }
+  };
+
   // Check if we have a matching customer based on the `external_id` provided
   // in the customer metadata. Otherwise, fallback to the cached customer id.
   checkForExistingCustomer = async (
     metadata?: API.CustomerMetadata,
-    defaultCustomerId?: string
-  ) => {
+    defaultCustomerId?: string | null
+  ): Promise<string | null> => {
     if (!metadata || !metadata?.external_id) {
+      this.setState({customerId: defaultCustomerId});
+
       return defaultCustomerId;
     }
 
@@ -261,22 +309,27 @@ class ChatWindow extends React.Component<Props, State> {
     } = await API.findCustomerByExternalId(externalId, accountId, baseUrl);
 
     if (!matchingCustomerId) {
+      this.setState({customerId: null});
+
       return null;
     } else if (matchingCustomerId === defaultCustomerId) {
+      this.setState({customerId: defaultCustomerId});
+
       return defaultCustomerId;
+    } else {
+      this.setState({customerId: matchingCustomerId});
+      // Emit update so we can cache the ID in the parent window
+      this.emit('customer:updated', {customerId: matchingCustomerId});
+
+      return matchingCustomerId;
     }
-
-    this.setState({customerId: matchingCustomerId});
-    this.emit('customer:updated', {customerId: matchingCustomerId});
-
-    return matchingCustomerId;
   };
 
   // Check if we've seen this customer before; if we have, try to fetch
   // the latest existing conversation for that customer. Otherwise, we wait
   // until the customer initiates the first message to create the conversation.
   fetchLatestConversation = async (
-    cachedCustomerId?: string,
+    cachedCustomerId?: string | null,
     metadata?: API.CustomerMetadata
   ) => {
     const customerId = await this.checkForExistingCustomer(
@@ -343,18 +396,45 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  createNewCustomerId = async (accountId: string, email?: string) => {
+  createOrUpdateCustomer = async (
+    accountId: string,
+    existingCustomerId?: string,
+    email?: string
+  ): Promise<string> => {
     const {baseUrl, customer} = this.props;
     const metadata = email ? {...customer, email} : customer;
-    const {id: customerId} = await API.createNewCustomer(
-      accountId,
-      metadata,
-      baseUrl
-    );
 
-    this.emit('customer:created', {customerId});
+    try {
+      const {id: customerId} = existingCustomerId
+        ? await API.updateCustomerMetadata(
+            existingCustomerId,
+            metadata,
+            baseUrl
+          )
+        : await API.createNewCustomer(accountId, metadata, baseUrl);
 
-    return customerId;
+      if (!existingCustomerId) {
+        this.emit('customer:created', {customerId});
+      }
+
+      return customerId;
+    } catch (err) {
+      // TODO: this edge case may occur if the cached customer ID somehow
+      // gets messed up (e.g. between dev and prod environments). The long term
+      // fix should be changing the cache key for different environments.
+      this.logger.error('Failed to update or create customer:', err);
+      this.logger.error('Retrying...');
+
+      const {id: customerId} = await API.createNewCustomer(
+        accountId,
+        metadata,
+        baseUrl
+      );
+
+      this.emit('customer:created', {customerId});
+
+      return customerId;
+    }
   };
 
   // Updates the customer with metadata fields like `name`, `email`, `external_id`
@@ -376,10 +456,16 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  initializeNewConversation = async (email?: string) => {
+  initializeNewConversation = async (
+    existingCustomerId?: string,
+    email?: string
+  ) => {
     const {accountId, baseUrl} = this.props;
-
-    const customerId = await this.createNewCustomerId(accountId, email);
+    const customerId = await this.createOrUpdateCustomer(
+      accountId,
+      existingCustomerId,
+      email
+    );
     const {id: conversationId} = await API.createNewConversation(
       accountId,
       customerId,
@@ -419,6 +505,13 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.emit('conversation:join', {conversationId, customerId});
     this.scrollIntoView();
+  };
+
+  isCustomerMessage = (message: Message, customerId: string): boolean => {
+    return (
+      message.customer_id === customerId ||
+      (message.sent_at && message.type === 'customer')
+    );
   };
 
   areDatesEqual = (x: string, y: string) => {
@@ -528,7 +621,7 @@ class ChatWindow extends React.Component<Props, State> {
     );
 
     if (!customerId || !conversationId) {
-      await this.initializeNewConversation(email);
+      await this.initializeNewConversation(customerId, email);
     }
 
     // We should never hit this block, just adding to satisfy TypeScript
@@ -568,11 +661,11 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     // TODO: figure out what this actual logic should be...
-    const previouslySentMessages = messages.find(
-      (msg) => msg.customer_id === customerId
+    const previouslySentMessages = messages.find((msg) =>
+      this.isCustomerMessage(msg, customerId)
     );
 
-    return !customerId && !previouslySentMessages;
+    return !previouslySentMessages;
   };
 
   handleGameLoaded = (e: any) => {
@@ -651,7 +744,7 @@ class ChatWindow extends React.Component<Props, State> {
     const {customerId, messages = []} = this.state;
     const unread = messages
       .filter((msg) => {
-        const {customer_id: cid, sent_at: sentAt, seen_at: seen, type} = msg;
+        const {seen_at: seen} = msg;
 
         if (seen) {
           return false;
@@ -659,7 +752,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         // NB: `msg.type` doesn't come from the server, it's just a way to
         // help identify unsent messages in the frontend for now
-        const isMe = cid === customerId || (sentAt && type === 'customer');
+        const isMe = this.isCustomerMessage(msg, customerId);
 
         return !isMe;
       })
@@ -813,9 +906,7 @@ class ChatWindow extends React.Component<Props, State> {
             const shouldDisplayTimestamp = key === messages.length - 1;
             // NB: `msg.type` doesn't come from the server, it's just a way to
             // help identify unsent messages in the frontend for now
-            const isMe =
-              msg.customer_id === customerId ||
-              (msg.sent_at && msg.type === 'customer');
+            const isMe = this.isCustomerMessage(msg, customerId);
 
             return (
               <motion.div
