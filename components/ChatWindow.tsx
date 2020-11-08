@@ -1,12 +1,12 @@
 import React from 'react';
 import {Box, Button, Flex, Heading, Text, Link} from 'theme-ui';
 import {Socket, Presence} from 'phoenix';
-import {motion} from 'framer-motion';
 import ChatMessage, {PopupChatMessage} from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import AgentAvailability from './AgentAvailability';
 import PapercupsBranding from './PapercupsBranding';
 import CloseIcon from './CloseIcon';
+import {motion} from '../helpers/motion';
 import * as API from '../helpers/api';
 import {
   Message,
