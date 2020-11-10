@@ -6,7 +6,7 @@ import ChatFooter from './ChatFooter';
 import AgentAvailability from './AgentAvailability';
 import PapercupsBranding from './PapercupsBranding';
 import CloseIcon from './CloseIcon';
-import {motion} from '../helpers/motion';
+// import {motion} from '../helpers/motion';
 import * as API from '../helpers/api';
 import {
   Message,
@@ -703,7 +703,7 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        <motion.iframe
+        <iframe
           src={`https://reichert621.github.io/?v=2`}
           sandbox="allow-same-origin allow-scripts allow-top-navigation"
           style={{
@@ -712,9 +712,9 @@ class ChatWindow extends React.Component<Props, State> {
             border: 'none',
             boxShadow: 'none',
           }}
-          initial={{opacity: 0, y: 2}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.4, ease: 'easeIn'}}
+          // initial={{opacity: 0, y: 2}}
+          // animate={{opacity: 1, y: 0}}
+          // transition={{duration: 0.4, ease: 'easeIn'}}
           onLoad={this.handleGameLoaded}
         />
         <Flex
@@ -786,14 +786,14 @@ class ChatWindow extends React.Component<Props, State> {
       >
         {displayed.map((msg, key) => {
           return (
-            <motion.div
+            <div
               key={key}
-              initial={{opacity: 0, x: -2}}
-              animate={{opacity: 1, x: 0}}
-              transition={{duration: 0.2, ease: 'easeIn'}}
+              // initial={{opacity: 0, x: -2}}
+              // animate={{opacity: 1, x: 0}}
+              // transition={{duration: 0.2, ease: 'easeIn'}}
             >
               <PopupChatMessage key={key} message={msg} />
-            </motion.div>
+            </div>
           );
         })}
 
@@ -909,11 +909,11 @@ class ChatWindow extends React.Component<Props, State> {
             const isMe = this.isCustomerMessage(msg, customerId);
 
             return (
-              <motion.div
+              <div
                 key={key}
-                initial={{opacity: 0, x: isMe ? 2 : -2}}
-                animate={{opacity: 1, x: 0}}
-                transition={{duration: 0.2, ease: 'easeIn'}}
+                // initial={{opacity: 0, x: isMe ? 2 : -2}}
+                // animate={{opacity: 1, x: 0}}
+                // transition={{duration: 0.2, ease: 'easeIn'}}
               >
                 <ChatMessage
                   key={key}
@@ -923,7 +923,7 @@ class ChatWindow extends React.Component<Props, State> {
                   isLastInGroup={isLastInGroup}
                   shouldDisplayTimestamp={shouldDisplayTimestamp}
                 />
-              </motion.div>
+              </div>
             );
           })}
           <div ref={(el) => (this.scrollToEl = el)} />
