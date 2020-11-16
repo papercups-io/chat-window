@@ -29,6 +29,12 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       '--theme-ui-colors-input': 'rgba(0, 0, 0, 0.65)',
       '--theme-ui-colors-offset': 'rgba(255, 255, 255, 0.8)',
     },
+    onBeforeSend: console.log,
+    onError: console.error,
+    onWarning: console.warn,
+    onSuccess: console.info,
+    onComplete: console.info,
+    onFinally: console.log,
   });
 
   return {
