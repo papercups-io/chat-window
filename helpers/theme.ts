@@ -3,6 +3,21 @@ import cssVars from 'css-vars-ponyfill';
 
 type ThemeSettings = {primary?: string};
 
+export const colors = {
+  text: '#141414',
+  background: '#fff',
+  primary: '#1890ff',
+  darker: '#1890ff',
+  lighter: '#1890ff',
+  secondary: '#722ed1',
+  green: '#52c41a',
+  muted: '#f0f0f0',
+  gray: 'rgba(0, 0, 0, 0.45)',
+  // TODO: come up with better names!
+  input: 'rgba(0, 0, 0, 0.65)',
+  offset: 'rgba(255, 255, 255, 0.8)',
+};
+
 export const getThemeConfig = (settings: ThemeSettings) => {
   const {primary = '#1890ff'} = settings;
   const base = tinycolor(primary);

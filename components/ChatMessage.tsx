@@ -5,6 +5,7 @@ import utc from 'dayjs/plugin/utc';
 import BotIcon from './BotIcon';
 import ChatMessageBody from './ChatMessageBody';
 import {Message, User} from '../helpers/utils';
+import {colors} from '../helpers/theme';
 
 dayjs.extend(utc);
 
@@ -72,7 +73,7 @@ const SenderAvatar = ({
     <Flex
       mr={2}
       sx={{
-        bg: isBot ? 'lighter' : 'primary',
+        bg: isBot ? colors.lighter : colors.primary,
         height: 32,
         width: 32,
         borderRadius: '50%',
@@ -120,7 +121,7 @@ const ChatMessage = ({
             className="Text--white"
             sx={{
               color: 'background',
-              bg: 'primary',
+              bg: colors.primary,
               whiteSpace: 'pre-wrap',
             }}
             content={body}
@@ -181,7 +182,7 @@ export const PopupChatMessage = ({message}: Props) => {
             px: 3,
             py: 3,
             color: 'text',
-            bg: 'background',
+            bg: colors.background,
             whiteSpace: 'pre-wrap',
             flex: 1,
             border: '1px solid rgb(245, 245, 245)',

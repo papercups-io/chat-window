@@ -21,6 +21,7 @@ import {
   isWindowHidden,
   addVisibilityEventListener,
 } from '../helpers/visibility';
+import {colors} from '../helpers/theme';
 
 type Props = {
   accountId: string;
@@ -696,7 +697,7 @@ class ChatWindow extends React.Component<Props, State> {
       <Flex
         className={isMobile ? 'Mobile' : ''}
         sx={{
-          bg: 'background',
+          bg: colors.background,
           flexDirection: 'column',
           height: '100%',
           width: '100%',
@@ -776,7 +777,7 @@ class ChatWindow extends React.Component<Props, State> {
       <Flex
         className={isMobile ? 'Mobile' : ''}
         sx={{
-          bg: 'transparent',
+          bg: colors.transparent,
           flexDirection: 'column',
           justifyContent: 'flex-end',
           height: '100%',
@@ -852,14 +853,14 @@ class ChatWindow extends React.Component<Props, State> {
       <Flex
         className={isMobile ? 'Mobile' : ''}
         sx={{
-          bg: 'background',
+          bg: colors.background,
           flexDirection: 'column',
           height: '100%',
           width: '100%',
           flex: 1,
         }}
       >
-        <Box sx={{bg: 'primary', position: 'relative'}}>
+        <Box sx={{bg: colors.primary, position: 'relative'}}>
           <Box pt={3} pb={showAgentAvailability ? 12 : 16} px={20}>
             {/* TODO: wrap in a button element */}
             {isCloseable && !this.isOnDeprecatedVersion() && (
