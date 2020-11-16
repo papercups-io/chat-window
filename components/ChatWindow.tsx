@@ -777,7 +777,7 @@ class ChatWindow extends React.Component<Props, State> {
       <Flex
         className={isMobile ? 'Mobile' : ''}
         sx={{
-          bg: colors.transparent,
+          bg: 'transparent',
           flexDirection: 'column',
           justifyContent: 'flex-end',
           height: '100%',
