@@ -874,11 +874,11 @@ class ChatWindow extends React.Component<Props, State> {
             <Heading
               as="h2"
               className="Papercups-heading"
-              sx={{color: 'background', my: 1, mr: 12}}
+              sx={{color: colors.background, my: 1, mr: 12}}
             >
               {title}
             </Heading>
-            <Text sx={{color: 'offset'}}>{subtitle}</Text>
+            <Text sx={{color: colors.offset}}>{subtitle}</Text>
           </Box>
 
           {showAgentAvailability && (

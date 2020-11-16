@@ -79,7 +79,7 @@ const SenderAvatar = ({
         borderRadius: '50%',
         justifyContent: 'center',
         alignItems: 'center',
-        color: '#fff',
+        color: colors.background,
       }}
     >
       {isBot && name.toLowerCase() === 'bot' ? (
@@ -120,7 +120,7 @@ const ChatMessage = ({
           <ChatMessageBody
             className="Text--white"
             sx={{
-              color: 'background',
+              color: colors.background,
               bg: colors.primary,
               whiteSpace: 'pre-wrap',
             }}
@@ -129,7 +129,7 @@ const ChatMessage = ({
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
-            <Text sx={{color: 'gray'}}>
+            <Text sx={{color: colors.gray}}>
               {timestamp ? `Sent ${timestamp}` : 'Sending...'}
             </Text>
           </Flex>
@@ -154,7 +154,7 @@ const ChatMessage = ({
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex m={1} sx={{justifyContent: 'flex-start'}}>
-          <Text sx={{color: 'gray'}}>
+          <Text sx={{color: colors.gray}}>
             {identifer} · Sent {timestamp}
           </Text>
         </Flex>
@@ -181,7 +181,7 @@ export const PopupChatMessage = ({message}: Props) => {
           sx={{
             px: 3,
             py: 3,
-            color: 'text',
+            color: colors.text,
             bg: colors.background,
             whiteSpace: 'pre-wrap',
             flex: 1,

@@ -31,7 +31,7 @@ const AgentAvailability = ({
           borderRadius: '50%',
         }}
       ></Box>
-      <Text sx={{color: 'offset', fontSize: 12}}>
+      <Text sx={{color: colors.offset, fontSize: 12}}>
         {hasAvailableAgents ? agentAvailableText : agentUnavailableText}
       </Text>
     </Flex>

@@ -1,5 +1,6 @@
 import React from 'react';
 import {Flex, Link} from 'theme-ui';
+import {colors} from '../helpers/theme';
 
 const PapercupsBranding = () => {
   return (
@@ -9,7 +10,7 @@ const PapercupsBranding = () => {
         target="_blank"
         rel="noopener noreferrer"
         sx={{
-          color: 'gray',
+          color: colors.gray,
           opacity: 0.8,
           transition: '0.2s',
           '&:hover': {opacity: 1},
