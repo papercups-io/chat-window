@@ -840,10 +840,10 @@ class ChatWindow extends React.Component<Props, State> {
       return this.renderUnreadMessages();
     }
 
-    // FIXME: only return null for versions of the chat-widget after v1.1.0
-    if (!isOpen && !this.isOnDeprecatedVersion()) {
-      return null;
-    }
+    // // FIXME: only return null for versions of the chat-widget after v1.1.0
+    // if (!isOpen && !this.isOnDeprecatedVersion()) {
+    //   return null;
+    // }
 
     const shouldAskForEmail = this.askForEmailUpfront();
     const hasAvailableAgents = availableAgents.length > 0;
