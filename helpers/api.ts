@@ -23,6 +23,7 @@ export const createNewCustomer = async (
       customer: {
         ...metadata,
         account_id: accountId,
+        // TODO: handle on the server instead?
         first_seen: now(),
         last_seen: now(),
       },

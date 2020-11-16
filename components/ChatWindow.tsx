@@ -10,7 +10,6 @@ import CloseIcon from './CloseIcon';
 import * as API from '../helpers/api';
 import {
   Message,
-  now,
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
@@ -247,8 +246,8 @@ class ChatWindow extends React.Component<Props, State> {
         type: 'bot',
         customer_id: 'bot',
         body: greeting, // 'Hi there! How can I help you?',
-        created_at: now().toISOString(), // TODO: what should this be?
-        seen_at: now().toISOString(),
+        created_at: new Date().toISOString(), // TODO: what should this be?
+        seen_at: new Date().toISOString(),
       },
     ];
   };
