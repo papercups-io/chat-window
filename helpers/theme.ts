@@ -1,4 +1,11 @@
 import tinycolor from 'tinycolor2';
+import cssVars from 'css-vars-ponyfill';
+
+cssVars({
+  onlyLegacy: false,
+  preserveVars: true,
+  watch: true,
+});
 
 type ThemeSettings = {primary?: string};
 
