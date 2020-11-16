@@ -28,13 +28,16 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       '--theme-ui-colors-gray': 'rgba(0, 0, 0, 0.45)',
       '--theme-ui-colors-input': 'rgba(0, 0, 0, 0.65)',
       '--theme-ui-colors-offset': 'rgba(255, 255, 255, 0.8)',
+      //
+      '--antd-wave-shadow-color': overrides.primary,
+      '--scroll-bar': '0',
     },
-    onBeforeSend: console.log,
+    // onBeforeSend: console.log,
     onError: console.error,
     onWarning: console.warn,
-    onSuccess: console.info,
-    onComplete: console.info,
-    onFinally: console.log,
+    // onSuccess: console.info,
+    // onComplete: console.info,
+    // onFinally: console.log,
   });
 
   return {
