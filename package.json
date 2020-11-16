@@ -25,6 +25,8 @@
     "css-vars-ponyfill": "^2.4.1",
     "next": "9.4.4",
     "phoenix": "^1.5.4",
+    "postcss-flexbugs-fixes": "^4.2.1",
+    "postcss-preset-env": "^6.7.0",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-emoji-render": "^1.2.4",
