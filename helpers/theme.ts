@@ -12,33 +12,33 @@ export const getThemeConfig = (settings: ThemeSettings) => {
     dark: base.darken().toString(),
   };
 
-  // cssVars({
-  //   onlyLegacy: false,
-  //   preserveVars: true,
-  //   watch: true,
-  //   variables: {
-  //     '--theme-ui-colors-text': '#141414',
-  //     '--theme-ui-colors-background': '#fff',
-  //     '--theme-ui-colors-primary': overrides.primary,
-  //     '--theme-ui-colors-darker': overrides.dark,
-  //     '--theme-ui-colors-lighter': overrides.light,
-  //     '--theme-ui-colors-secondary': '#722ed1',
-  //     '--theme-ui-colors-green': '#52c41a',
-  //     '--theme-ui-colors-muted': '#f0f0f0',
-  //     '--theme-ui-colors-gray': 'rgba(0, 0, 0, 0.45)',
-  //     '--theme-ui-colors-input': 'rgba(0, 0, 0, 0.65)',
-  //     '--theme-ui-colors-offset': 'rgba(255, 255, 255, 0.8)',
-  //     //
-  //     '--antd-wave-shadow-color': overrides.primary,
-  //     '--scroll-bar': '0',
-  //   },
-  //   // onBeforeSend: console.log,
-  //   // onError: console.error,
-  //   // onWarning: console.warn,
-  //   // onSuccess: console.info,
-  //   // onComplete: console.info,
-  //   // onFinally: console.log,
-  // });
+  cssVars({
+    onlyLegacy: false,
+    preserveVars: true,
+    watch: true,
+    variables: {
+      '--theme-ui-colors-text': '#141414',
+      '--theme-ui-colors-background': '#fff',
+      '--theme-ui-colors-primary': overrides.primary,
+      '--theme-ui-colors-darker': overrides.dark,
+      '--theme-ui-colors-lighter': overrides.light,
+      '--theme-ui-colors-secondary': '#722ed1',
+      '--theme-ui-colors-green': '#52c41a',
+      '--theme-ui-colors-muted': '#f0f0f0',
+      '--theme-ui-colors-gray': 'rgba(0, 0, 0, 0.45)',
+      '--theme-ui-colors-input': 'rgba(0, 0, 0, 0.65)',
+      '--theme-ui-colors-offset': 'rgba(255, 255, 255, 0.8)',
+      //
+      '--antd-wave-shadow-color': overrides.primary,
+      '--scroll-bar': '0',
+    },
+    // onBeforeSend: console.log,
+    // onError: console.error,
+    // onWarning: console.warn,
+    // onSuccess: console.info,
+    // onComplete: console.info,
+    // onFinally: console.log,
+  });
 
   return {
     useBodyStyles: false,
