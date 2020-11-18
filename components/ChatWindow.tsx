@@ -158,6 +158,27 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
+  listenForNewConversations = (customerId: string) => {
+    const {customer: metadata} = this.props;
+
+    const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
+
+    channel.on('conversation:created', (payload: any) => {
+      console.log('Conversation created!', payload);
+      // TODO: clean this up a bit
+      this.fetchLatestConversation(customerId, metadata);
+    });
+
+    channel
+      .join()
+      .receive('ok', (res: any) => {
+        this.logger.debug('Successfully listening for new conversations!', res);
+      })
+      .receive('error', (err: any) => {
+        this.logger.debug('Unable to listen for new conversations!', err);
+      });
+  };
+
   listenForAgentAvailability = () => {
     const {accountId} = this.props;
     const room = this.socket.channel(`room:${accountId}`, {});
@@ -361,6 +382,7 @@ class ChatWindow extends React.Component<Props, State> {
         // If there are no conversations yet, wait until the customer creates
         // a new message to create the new conversation
         this.setState({messages: [...this.getDefaultGreeting()]});
+        this.listenForNewConversations(customerId);
 
         return;
       }
