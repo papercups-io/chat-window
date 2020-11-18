@@ -16,7 +16,6 @@ html,
 body,
 #__next {
   display: flex;
-  flex-direction: column;
 }
 
 body {
