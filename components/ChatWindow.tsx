@@ -164,8 +164,8 @@ class ChatWindow extends React.Component<Props, State> {
     const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
 
     channel.on('conversation:created', (payload: any) => {
-      console.log('Conversation created!', payload);
-      // TODO: clean this up a bit
+      this.logger.debug('Conversation created!', payload);
+      // TODO: clean this up a bit?
       this.fetchLatestConversation(customerId, metadata);
     });
 
