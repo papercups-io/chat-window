@@ -166,16 +166,20 @@ class ChatWindow extends React.Component<Props, State> {
     channel.on('conversation:created', (payload: any) => {
       console.debug('Conversation created!', payload);
       // TODO: clean this up a bit?
-      this.fetchLatestConversation(customerId, metadata);
+      // TODO: remove timeout when issue is fixed
+      setTimeout(
+        () => this.fetchLatestConversation(customerId, metadata),
+        1000
+      );
     });
 
     channel
       .join()
       .receive('ok', (res: any) => {
-        console.debug('Successfully listening for new conversations!', res);
+        this.logger.debug('Successfully listening for new conversations!', res);
       })
       .receive('error', (err: any) => {
-        console.debug('Unable to listen for new conversations!', err);
+        this.logger.debug('Unable to listen for new conversations!', err);
       });
   };
 
