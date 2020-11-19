@@ -164,7 +164,7 @@ class ChatWindow extends React.Component<Props, State> {
     const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
 
     channel.on('conversation:created', (payload: any) => {
-      this.logger.debug('Conversation created!', payload);
+      console.debug('Conversation created!', payload);
       // TODO: clean this up a bit?
       this.fetchLatestConversation(customerId, metadata);
     });
@@ -172,10 +172,10 @@ class ChatWindow extends React.Component<Props, State> {
     channel
       .join()
       .receive('ok', (res: any) => {
-        this.logger.debug('Successfully listening for new conversations!', res);
+        console.debug('Successfully listening for new conversations!', res);
       })
       .receive('error', (err: any) => {
-        this.logger.debug('Unable to listen for new conversations!', err);
+        console.debug('Unable to listen for new conversations!', err);
       });
   };
 
