@@ -32,13 +32,13 @@ const renderers = {
   },
 };
 
-type ChatMessageBoxProps = {
+type ChatMessageBodyProps = {
   className?: string;
   content: string;
   sx?: object;
 };
 
-const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
+const ChatMessageBody = ({className, content, sx}: ChatMessageBodyProps) => {
   const parsedSx = Object.assign(
     {
       px: '14px',
@@ -60,7 +60,7 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
   return (
     <Box sx={parsedSx}>
       <ReactMarkdown
-        className={`Text--markdown ${className}`}
+        className={`Text--markdown ${className || ''}`}
         source={content}
         allowedTypes={allowedNodeTypes}
         renderers={renderers}
@@ -70,4 +70,4 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
   );
 };
 
-export default ChatMessageBox;
+export default ChatMessageBody;
