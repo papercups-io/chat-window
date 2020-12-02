@@ -5,6 +5,7 @@ import utc from 'dayjs/plugin/utc';
 import BotIcon from './BotIcon';
 import ChatMessageBody from './ChatMessageBody';
 import {Message, User} from '../helpers/utils';
+import {colors} from '../helpers/theme';
 
 dayjs.extend(utc);
 
@@ -72,13 +73,13 @@ const SenderAvatar = ({
     <Flex
       mr={2}
       sx={{
-        bg: isBot ? 'lighter' : 'primary',
+        bg: isBot ? colors.lighter : colors.primary,
         height: 32,
         width: 32,
         borderRadius: '50%',
         justifyContent: 'center',
         alignItems: 'center',
-        color: '#fff',
+        color: colors.background,
       }}
     >
       {isBot && name.toLowerCase() === 'bot' ? (
@@ -119,8 +120,8 @@ const ChatMessage = ({
           <ChatMessageBody
             className="Text--white"
             sx={{
-              color: 'background',
-              bg: 'primary',
+              color: colors.background,
+              bg: colors.primary,
               whiteSpace: 'pre-wrap',
             }}
             content={body}
@@ -128,7 +129,7 @@ const ChatMessage = ({
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
-            <Text sx={{color: 'gray'}}>
+            <Text sx={{color: colors.gray}}>
               {timestamp ? `Sent ${timestamp}` : 'Sending...'}
             </Text>
           </Flex>
@@ -153,7 +154,7 @@ const ChatMessage = ({
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex m={1} sx={{justifyContent: 'flex-start'}}>
-          <Text sx={{color: 'gray'}}>
+          <Text sx={{color: colors.gray}}>
             {identifer} · Sent {timestamp}
           </Text>
         </Flex>
@@ -180,8 +181,8 @@ export const PopupChatMessage = ({message}: Props) => {
           sx={{
             px: 3,
             py: 3,
-            color: 'text',
-            bg: 'background',
+            color: colors.text,
+            bg: colors.background,
             whiteSpace: 'pre-wrap',
             flex: 1,
             border: '1px solid rgb(245, 245, 245)',

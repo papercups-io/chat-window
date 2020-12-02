@@ -1,6 +1,7 @@
 import React from 'react';
 import {Box, Button, Flex, Input, Textarea} from 'theme-ui';
 import SendIcon from './SendIcon';
+import {colors} from '../helpers/theme';
 
 const ChatFooter = ({
   placeholder,
@@ -72,7 +73,7 @@ const ChatFooter = ({
             <Textarea
               sx={{
                 fontFamily: 'body',
-                color: 'input',
+                color: colors.input,
                 variant: 'styles.input.transparent',
               }}
               ref={messageInput}
