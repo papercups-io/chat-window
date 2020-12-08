@@ -29,6 +29,7 @@ type Props = {
   baseUrl?: string;
   greeting?: string;
   newMessagePlaceholder?: string;
+  emailInputPlaceholder?: string;
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
   customer?: API.CustomerMetadata;
@@ -834,6 +835,7 @@ class ChatWindow extends React.Component<Props, State> {
       title = 'Welcome!',
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
+      emailInputPlaceholder = 'Enter your email',
       agentAvailableText = "We're online right now!",
       agentUnavailableText = "We're away at the moment.",
       companyName,
@@ -969,6 +971,7 @@ class ChatWindow extends React.Component<Props, State> {
           <ChatFooter
             key={isOpen ? 1 : 0}
             placeholder={newMessagePlaceholder}
+            emailInputPlaceholder={emailInputPlaceholder}
             isSending={isSending}
             shouldRequireEmail={shouldAskForEmail}
             onSendMessage={this.handleSendMessage}

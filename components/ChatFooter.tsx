@@ -4,11 +4,13 @@ import SendIcon from './SendIcon';
 
 const ChatFooter = ({
   placeholder,
+  emailInputPlaceholder,
   isSending,
   shouldRequireEmail,
   onSendMessage,
 }: {
   placeholder?: string;
+  emailInputPlaceholder?: string;
   isSending: boolean;
   shouldRequireEmail?: boolean;
   onSendMessage: (message: string, email?: string) => Promise<void>;
@@ -58,7 +60,7 @@ const ChatFooter = ({
           <Box py={1} sx={{borderBottom: '1px solid rgb(230, 230, 230)'}}>
             <Input
               sx={{variant: 'styles.input.transparent'}}
-              placeholder="Enter your email"
+              placeholder={emailInputPlaceholder}
               value={email}
               onChange={handleEmailChange}
             />
