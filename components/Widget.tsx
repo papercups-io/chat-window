@@ -16,6 +16,7 @@ type Config = {
   greeting?: string;
   customerId?: string;
   newMessagePlaceholder?: string;
+  emailInputPlaceholder?: string;
   companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
@@ -140,6 +141,7 @@ class Wrapper extends React.Component<Props, State> {
       title = 'Welcome!',
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
+      emailInputPlaceholder = 'Enter your email',
       primaryColor = '1890ff',
       baseUrl = 'https://app.papercups.io',
       requireEmailUpfront = '0',
@@ -167,6 +169,7 @@ class Wrapper extends React.Component<Props, State> {
           greeting={greeting}
           companyName={companyName}
           newMessagePlaceholder={newMessagePlaceholder}
+          emailInputPlaceholder={emailInputPlaceholder}
           agentAvailableText={agentAvailableText}
           agentUnavailableText={agentUnavailableText}
           showAgentAvailability={shouldHideAvailability}
