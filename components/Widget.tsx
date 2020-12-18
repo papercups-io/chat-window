@@ -17,6 +17,7 @@ type Config = {
   customerId?: string;
   newMessagePlaceholder?: string;
   emailInputPlaceholder?: string;
+  newMessagesNotificationText?: string;
   companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
@@ -51,6 +52,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
     greeting,
     companyName,
     newMessagePlaceholder,
+    emailInputPlaceholder,
+    newMessagesNotificationText,
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
@@ -67,6 +70,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
     greeting,
     companyName,
     newMessagePlaceholder,
+    emailInputPlaceholder,
+    newMessagesNotificationText,
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
@@ -142,6 +147,7 @@ class Wrapper extends React.Component<Props, State> {
       subtitle = 'How can we help you?',
       newMessagePlaceholder = 'Start typing...',
       emailInputPlaceholder = 'Enter your email',
+      newMessagesNotificationText = 'View new messages',
       primaryColor = '1890ff',
       baseUrl = 'https://app.papercups.io',
       requireEmailUpfront = '0',
@@ -170,6 +176,7 @@ class Wrapper extends React.Component<Props, State> {
           companyName={companyName}
           newMessagePlaceholder={newMessagePlaceholder}
           emailInputPlaceholder={emailInputPlaceholder}
+          newMessagesNotificationText={newMessagesNotificationText}
           agentAvailableText={agentAvailableText}
           agentUnavailableText={agentUnavailableText}
           showAgentAvailability={shouldHideAvailability}

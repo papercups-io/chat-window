@@ -30,6 +30,7 @@ type Props = {
   greeting?: string;
   newMessagePlaceholder?: string;
   emailInputPlaceholder?: string;
+  newMessagesNotificationText?: string;
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
   customer?: API.CustomerMetadata;
@@ -766,7 +767,10 @@ class ChatWindow extends React.Component<Props, State> {
   renderUnreadMessages() {
     const MAX_CHARS = 140;
 
-    const {isMobile = false} = this.props;
+    const {
+      newMessagesNotificationText = 'View new messages',
+      isMobile = false,
+    } = this.props;
     const {customerId, messages = []} = this.state;
     const unread = messages
       .filter((msg) => {
@@ -824,7 +828,9 @@ class ChatWindow extends React.Component<Props, State> {
         })}
 
         <Flex mt={2} pr={2} sx={{justifyContent: 'flex-end'}}>
-          <Link onClick={this.emitOpenWindow}>View new messages</Link>
+          <Link onClick={this.emitOpenWindow}>
+            {newMessagesNotificationText}
+          </Link>
         </Flex>
       </Flex>
     );
