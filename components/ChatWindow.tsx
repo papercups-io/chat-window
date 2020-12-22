@@ -516,8 +516,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer_id: customerId,
     });
 
-    // TODO: deprecate 'shout' event in favor of 'message:created'
-    this.channel.on('shout', (message: any) => {
+    this.channel.on('message:created', (message: any) => {
       this.setState({isGameMode: false}, () => this.handleNewMessage(message));
     });
 
@@ -656,8 +655,7 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    // TODO: deprecate 'shout' event in favor of 'message:created'
-    this.channel.push('shout', {
+    this.channel.push('message:created', {
       body: message,
       customer_id: this.state.customerId,
       sent_at: sentAt,
