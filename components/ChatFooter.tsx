@@ -8,12 +8,14 @@ const ChatFooter = ({
   isSending,
   shouldRequireEmail,
   onSendMessage,
+  onInputChanged,
 }: {
   placeholder?: string;
   emailInputPlaceholder?: string;
   isSending: boolean;
   shouldRequireEmail?: boolean;
   onSendMessage: (message: string, email?: string) => Promise<void>;
+  onInputChanged: () => Promise<void>;
 }) => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -47,6 +49,8 @@ const ChatFooter = ({
 
   const handleKeyDown = (e: any) => {
     const {key, shiftKey} = e;
+
+    onInputChanged();
 
     if (!shiftKey && key === 'Enter') {
       handleSendMessage(e);

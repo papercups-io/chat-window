@@ -53,6 +53,7 @@ type State = {
   isGameMode?: boolean;
   shouldDisplayNotifications: boolean;
   shouldDisplayBranding: boolean;
+  othersTyping: Array<any>;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -80,6 +81,7 @@ class ChatWindow extends React.Component<Props, State> {
       isGameMode: false,
       shouldDisplayNotifications: false,
       shouldDisplayBranding: false,
+      othersTyping: [],
     };
   }
 
@@ -521,6 +523,26 @@ class ChatWindow extends React.Component<Props, State> {
       this.setState({isGameMode: false}, () => this.handleNewMessage(message));
     });
 
+    this.channel.on('message:other_typing', (payload) => {
+      if (
+        payload.conversation_id !== conversationId ||
+        payload.user.kind !== 'user'
+      ) {
+        return;
+      }
+
+      const oldState = this.state.othersTyping;
+
+      const alreadyTyping = oldState.find(
+        (item: any) =>
+          item.id === payload.user.id && item.kind === payload.user.kind
+      );
+      const newState =
+        payload.user && !alreadyTyping ? [...oldState, payload.user] : oldState;
+      this.setState({othersTyping: newState});
+      setTimeout(() => this.setState({othersTyping: []}), 1000);
+    });
+
     this.channel
       .join()
       .receive('ok', (res: any) => {
@@ -763,6 +785,33 @@ class ChatWindow extends React.Component<Props, State> {
     );
   }
 
+  handleInputChanged = () =>
+    this.channel.push(`message:typing`, {customer_id: this.state.customerId});
+
+  othersTypingMessage = (others: Array<any>) => {
+    const toStr = (name?: string, email?: string) =>
+      `${name || email || 'Anonymous User'} `;
+
+    const titles = others.map((item: any) => toStr(item.name, item.email));
+    let msg = '';
+
+    switch (titles.length) {
+      case 0:
+        msg = '\xa0';
+        break;
+      case 1:
+        msg = [...titles, 'is typing...'].join(' ');
+        break;
+      default:
+        msg = `${titles.join(', ')} are typing...`;
+        break;
+    }
+    if (msg.length > 35) {
+      return 'Others are typing...';
+    }
+    return msg;
+  };
+
   // TODO: make it possible to disable this feature?
   renderUnreadMessages() {
     const MAX_CHARS = 140;
@@ -961,6 +1010,7 @@ class ChatWindow extends React.Component<Props, State> {
           })}
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
+        <Box px={3}>{this.othersTypingMessage(this.state.othersTyping)}</Box>
         {shouldDisplayBranding && <PapercupsBranding />}
         <Box
           px={2}
@@ -981,6 +1031,7 @@ class ChatWindow extends React.Component<Props, State> {
             isSending={isSending}
             shouldRequireEmail={shouldAskForEmail}
             onSendMessage={this.handleSendMessage}
+            onInputChanged={this.handleInputChanged}
           />
         </Box>
         <img
