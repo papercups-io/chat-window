@@ -329,10 +329,18 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     const {accountId, baseUrl} = this.props;
-    const {external_id: externalId} = metadata;
+    // NB: we check for matching existing customers based on external_id, email,
+    // and host -- this may break across subdomains, but I think this is fine for now.
+    const {email, host, external_id: externalId} = metadata;
+    const filters = {email, host};
     const {
       customer_id: matchingCustomerId,
-    } = await API.findCustomerByExternalId(externalId, accountId, baseUrl);
+    } = await API.findCustomerByExternalId(
+      externalId,
+      accountId,
+      filters,
+      baseUrl
+    );
 
     if (!matchingCustomerId) {
       this.setState({customerId: null});

@@ -8,6 +8,13 @@ export type CustomerMetadata = {
   external_id: string;
   metadata?: {[key: string]: any};
   // TODO: include browser info
+  host?: string;
+  pathname?: string;
+  current_url?: string;
+  browser?: string;
+  os?: string;
+  ip?: string;
+  time_zone?: string;
 };
 
 const EMPTY_METADATA = {} as CustomerMetadata;
@@ -76,11 +83,12 @@ export const createNewConversation = async (
 export const findCustomerByExternalId = async (
   externalId: string,
   accountId: string,
+  filters: Record<string, any>,
   baseUrl = DEFAULT_BASE_URL
 ) => {
   return request
     .get(`${baseUrl}/api/customers/identify`)
-    .query({external_id: externalId, account_id: accountId})
+    .query({...filters, external_id: externalId, account_id: accountId})
     .then((res) => res.body.data);
 };
 
