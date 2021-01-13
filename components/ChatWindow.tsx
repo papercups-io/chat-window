@@ -241,12 +241,13 @@ class ChatWindow extends React.Component<Props, State> {
   handlePapercupsPlan = (payload: any = {}) => {
     this.logger.debug('Handling subscription plan:', payload);
 
-    const plan = payload && payload.plan;
-    const shouldDisplayBranding = plan
-      ? String(plan).toLowerCase() === 'starter'
-      : false;
+    // TODO: figure out the best way to determine when to display branding
+    // const plan = payload && payload.plan;
+    // const shouldDisplayBranding = plan
+    //   ? String(plan).toLowerCase() === 'starter'
+    //   : false;
 
-    this.setState({shouldDisplayBranding});
+    this.setState({shouldDisplayBranding: true});
   };
 
   handleToggleDisplay = (payload: any = {}) => {
