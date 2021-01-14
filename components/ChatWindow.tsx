@@ -13,6 +13,7 @@ import {
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
+  isSecureExternalId,
 } from '../helpers/utils';
 import {isDev, getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
@@ -323,7 +324,11 @@ class ChatWindow extends React.Component<Props, State> {
     metadata?: API.CustomerMetadata,
     defaultCustomerId?: string | null
   ): Promise<string | null> => {
-    if (!metadata || !metadata?.external_id) {
+    if (
+      !metadata ||
+      !metadata?.external_id ||
+      !isSecureExternalId(metadata?.external_id)
+    ) {
       this.setState({customerId: defaultCustomerId});
 
       return defaultCustomerId;
@@ -343,11 +348,9 @@ class ChatWindow extends React.Component<Props, State> {
       baseUrl
     );
 
-    if (!matchingCustomerId) {
-      this.setState({customerId: null});
-
-      return null;
-    } else if (matchingCustomerId === defaultCustomerId) {
+    // TODO: should we just set customerId to null if no match is found?
+    // We currently just fall back to the cached value if no match is found
+    if (!matchingCustomerId || matchingCustomerId === defaultCustomerId) {
       this.setState({customerId: defaultCustomerId});
 
       return defaultCustomerId;
