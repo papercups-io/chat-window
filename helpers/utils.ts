@@ -66,6 +66,20 @@ export function shouldActivateGameMode(message: string) {
   );
 }
 
+export function isSecureExternalId(id?: any) {
+  if (!id) {
+    return false;
+  } else if (typeof id !== 'string') {
+    return false;
+  }
+
+  const isLongEnough = id.length >= 8;
+  const isOnlyNumbers = /^\d+$/.test(id);
+  const isOnlyLetters = /^[a-zA-Z]+$/.test(id);
+
+  return isLongEnough && !isOnlyNumbers && !isOnlyLetters;
+}
+
 export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
   const cb = (msg: any) => {
     handler(msg);
