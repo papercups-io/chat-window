@@ -9,11 +9,11 @@ import PapercupsBranding from './PapercupsBranding';
 import CloseIcon from './CloseIcon';
 import * as API from '../helpers/api';
 import {
-  Message,
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
 } from '../helpers/utils';
+import {Message} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {

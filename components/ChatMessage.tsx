@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import BotIcon from './BotIcon';
 import ChatMessageBody from './ChatMessageBody';
-import {Message, User} from '../helpers/utils';
+import {Message, User} from '../helpers/types';
 
 dayjs.extend(utc);
 
@@ -105,7 +105,7 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, created_at, user, type} = message;
+  const {body, created_at, user, type, attachments = []} = message;
   const created = created_at ? dayjs.utc(created_at) : null;
   const timestamp = created ? formatRelativeTime(created) : null;
   const isBot = type === 'bot';
@@ -124,6 +124,7 @@ const ChatMessage = ({
               whiteSpace: 'pre-wrap',
             }}
             content={body}
+            attachments={attachments}
           />
         </Flex>
         {shouldDisplayTimestamp && (
@@ -149,6 +150,7 @@ const ChatMessage = ({
             whiteSpace: 'pre-wrap',
           }}
           content={body}
+          attachments={attachments}
         />
       </Flex>
       {shouldDisplayTimestamp && (
@@ -163,9 +165,7 @@ const ChatMessage = ({
 };
 
 export const PopupChatMessage = ({message}: Props) => {
-  const {body, created_at, user, type} = message;
-  const created = created_at ? dayjs.utc(created_at) : null;
-  const timestamp = created ? formatRelativeTime(created) : null;
+  const {body, user, type} = message;
   const isBot = type === 'bot';
   const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
 
