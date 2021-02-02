@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
+import {Attachment} from '../helpers/types';
 
 /**
  * Whitelist node types that we allow when we render markdown.
@@ -32,13 +33,38 @@ const renderers = {
   },
 };
 
+const ChatMessageAttachment = ({attachment}: {attachment: Attachment}) => {
+  const {id, filename, file_url: fileUrl} = attachment;
+
+  return (
+    <Box key={id}>
+      <a
+        href={fileUrl}
+        style={{
+          textDecoration: 'underline',
+        }}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {filename}
+      </a>
+    </Box>
+  );
+};
+
 type ChatMessageBodyProps = {
   className?: string;
   content: string;
   sx?: object;
+  attachments?: Array<Attachment>;
 };
 
-const ChatMessageBody = ({className, content, sx}: ChatMessageBodyProps) => {
+const ChatMessageBody = ({
+  className,
+  content,
+  sx,
+  attachments = [],
+}: ChatMessageBodyProps) => {
   const parsedSx = Object.assign(
     {
       px: '14px',
@@ -66,6 +92,18 @@ const ChatMessageBody = ({className, content, sx}: ChatMessageBodyProps) => {
         renderers={renderers}
         plugins={[breaks]}
       />
+      {attachments && attachments.length > 0 && (
+        <Box mt={2} className={className}>
+          {attachments.map((attachment) => {
+            return (
+              <ChatMessageAttachment
+                key={attachment.id}
+                attachment={attachment}
+              />
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 };
