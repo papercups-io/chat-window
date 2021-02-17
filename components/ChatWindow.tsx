@@ -577,7 +577,7 @@ class ChatWindow extends React.Component<Props, State> {
       (m) =>
         !m.created_at &&
         this.areDatesEqual(m.sent_at, message.sent_at) &&
-        m.body === message.body
+        (m.body === message.body || (!m.body && !message.body))
     );
     const updated = unsent
       ? messages.map((m) => (m.sent_at === unsent.sent_at ? message : m))
@@ -627,14 +627,18 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
-  handleSendMessage = async (message: string, email?: string) => {
+  handleSendMessage = async (message: Partial<Message>, email?: string) => {
     const {customerId, conversationId, isSending} = this.state;
+    const {body, file_ids = []} = message;
+    const isMissingBody = !body || body.trim().length === 0;
+    const isMissingAttachments = !file_ids || file_ids.length === 0;
+    const shouldSkipSending = isMissingBody && isMissingAttachments;
 
-    if (isSending || !message || message.trim().length === 0) {
+    if (isSending || shouldSkipSending) {
       return;
     }
 
-    if (shouldActivateGameMode(message)) {
+    if (shouldActivateGameMode(body)) {
       this.setState({isGameMode: true});
 
       return;
@@ -643,7 +647,8 @@ class ChatWindow extends React.Component<Props, State> {
     const sentAt = new Date().toISOString();
     // TODO: figure out how this should work if `customerId` is null
     const payload: Message = {
-      body: message,
+      ...message,
+      body,
       customer_id: customerId,
       type: 'customer',
       sent_at: sentAt,
@@ -667,14 +672,16 @@ class ChatWindow extends React.Component<Props, State> {
 
     // TODO: deprecate 'shout' event in favor of 'message:created'
     this.channel.push('shout', {
-      body: message,
+      ...message,
+      body,
       customer_id: this.state.customerId,
       sent_at: sentAt,
     });
 
     // TODO: should this only be emitted after the message is successfully sent?
     this.emit('message:sent', {
-      body: message,
+      ...message,
+      body,
       type: 'customer',
       sent_at: sentAt,
       customer_id: this.state.customerId,
@@ -857,6 +864,8 @@ class ChatWindow extends React.Component<Props, State> {
       isMobile = false,
       isCloseable = true,
       showAgentAvailability = false,
+      accountId,
+      baseUrl,
     } = this.props;
     const {
       customerId,
@@ -985,6 +994,8 @@ class ChatWindow extends React.Component<Props, State> {
           */}
           <ChatFooter
             key={isOpen ? 1 : 0}
+            accountId={accountId}
+            baseUrl={baseUrl}
             placeholder={newMessagePlaceholder}
             emailInputPlaceholder={emailInputPlaceholder}
             isSending={isSending}

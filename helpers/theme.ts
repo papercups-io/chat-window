@@ -74,6 +74,20 @@ export const getThemeConfig = (settings: ThemeSettings) => {
           borderColor: overrides.dark,
         },
       },
+      link: {
+        cursor: 'pointer',
+        outline: 0,
+        transition: '0.2s',
+        backgroundColor: 'background',
+        '&:hover': {
+          backgroundColor: 'offset',
+          borderColor: 'offset',
+        },
+        '&:active': {
+          backgroundColor: 'offset',
+          borderColor: 'offset',
+        },
+      },
     },
     styles: {
       root: {

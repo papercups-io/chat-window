@@ -17,6 +17,7 @@ export type Message = {
   user_id?: number;
   user?: User;
   type?: 'bot' | 'agent' | 'customer';
+  file_ids?: Array<string>;
   attachments?: Array<Attachment>;
 };
 

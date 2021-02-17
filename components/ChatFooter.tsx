@@ -1,20 +1,68 @@
 import React from 'react';
 import {Box, Button, Flex, Input} from 'theme-ui';
+import Upload from 'rc-upload';
 import ResizableTextArea from './ResizableTextArea';
 import SendIcon from './SendIcon';
+import PaperclipIcon from './PaperclipIcon';
+import {Attachment, Message} from '../helpers/types';
+
+const UploadFileButton = ({isDisabled, accountId, baseUrl, onSuccess}: any) => {
+  const props = {
+    action: `${baseUrl}/api/upload`,
+    data: {account_id: accountId},
+    multiple: true,
+    headers: {
+      'X-Requested-With': null,
+    },
+    onStart: (file: File) => {
+      console.log('onStart', file.name);
+    },
+    onSuccess({data}: {data: Attachment}) {
+      console.log('onSuccess', data);
+      onSuccess(data);
+    },
+    onError(err: any) {
+      console.log('onError', err);
+    },
+  };
+
+  return (
+    <Upload {...props}>
+      <Button
+        variant="link"
+        disabled={isDisabled}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: '50%',
+          height: '36px',
+          width: '36px',
+          padding: 0,
+        }}
+      >
+        <PaperclipIcon width={16} height={16} />
+      </Button>
+    </Upload>
+  );
+};
 
 const ChatFooter = ({
   placeholder,
   emailInputPlaceholder,
   isSending,
   shouldRequireEmail,
+  accountId,
+  baseUrl,
   onSendMessage,
 }: {
   placeholder?: string;
   emailInputPlaceholder?: string;
   isSending: boolean;
   shouldRequireEmail?: boolean;
-  onSendMessage: (message: string, email?: string) => Promise<void>;
+  accountId: string;
+  baseUrl?: string;
+  onSendMessage: (message: Partial<Message>, email?: string) => Promise<void>;
 }) => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -41,9 +89,19 @@ const ChatFooter = ({
   const handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
-    onSendMessage(message, email);
+    onSendMessage({body: message}, email);
     setMessage('');
     setEmail('');
+  };
+
+  const handleSendFile = (file: Attachment) => {
+    if (file && file.id) {
+      console.log('Sending file!', file);
+
+      onSendMessage({body: message, file_ids: [file.id]}, email);
+      setMessage('');
+      setEmail('');
+    }
   };
 
   const handleKeyDown = (e: any) => {
@@ -91,7 +149,13 @@ const ChatFooter = ({
             />
           </Box>
 
-          <Box pl={3}>
+          <Flex pl={3}>
+            <UploadFileButton
+              accountId={accountId}
+              baseUrl={baseUrl}
+              onSuccess={handleSendFile}
+            />
+
             <Button
               variant="primary"
               type="submit"
@@ -108,7 +172,7 @@ const ChatFooter = ({
             >
               <SendIcon width={16} height={16} fill="background" />
             </Button>
-          </Box>
+          </Flex>
         </Flex>
       </form>
     </Box>

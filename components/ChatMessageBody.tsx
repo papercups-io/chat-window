@@ -2,7 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import {Twemoji} from 'react-emoji-render';
-import {Box} from 'theme-ui';
+import {Box, Image} from 'theme-ui';
 import {Attachment} from '../helpers/types';
 
 /**
@@ -34,7 +34,13 @@ const renderers = {
 };
 
 const ChatMessageAttachment = ({attachment}: {attachment: Attachment}) => {
-  const {id, filename, file_url: fileUrl} = attachment;
+  const {
+    id,
+    filename,
+    file_url: fileUrl,
+    content_type: contentType,
+  } = attachment;
+  const isImageFile = contentType.indexOf('image') !== -1;
 
   return (
     <Box key={id}>
@@ -46,7 +52,13 @@ const ChatMessageAttachment = ({attachment}: {attachment: Attachment}) => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        {filename}
+        {isImageFile && false ? (
+          <Box>
+            <Image alt={filename} src={fileUrl} />
+          </Box>
+        ) : (
+          filename
+        )}
       </a>
     </Box>
   );
