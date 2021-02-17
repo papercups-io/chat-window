@@ -1,5 +1,6 @@
 import React from 'react';
-import {Box, Button, Flex, Input, Textarea} from 'theme-ui';
+import {Box, Button, Flex, Input} from 'theme-ui';
+import ResizableTextArea from './ResizableTextArea';
 import SendIcon from './SendIcon';
 
 const ChatFooter = ({
@@ -71,7 +72,7 @@ const ChatFooter = ({
       <form onSubmit={handleSendMessage}>
         <Flex sx={{alignItems: 'center'}} py={2}>
           <Box mr={3} sx={{flex: 1}}>
-            <Textarea
+            <ResizableTextArea
               sx={{
                 fontFamily: 'body',
                 color: 'input',
@@ -80,7 +81,8 @@ const ChatFooter = ({
               ref={messageInput}
               className="TextArea--transparent"
               placeholder={placeholder}
-              rows={1}
+              minRows={1}
+              maxRows={4}
               autoFocus
               value={message}
               disabled={shouldRequireEmail && !hasValidEmail}
