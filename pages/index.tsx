@@ -2,6 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import {useRouter} from 'next/router';
 import Widget from '../components/Widget';
+import ConfigProvider from '../components/ConfigProvider';
 
 export default function Home() {
   const {query} = useRouter();
@@ -15,7 +16,11 @@ export default function Home() {
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
-      {query.accountId ? <Widget config={query} /> : null}
+      {query.accountId ? (
+        <ConfigProvider config={query}>
+          <Widget />
+        </ConfigProvider>
+      ) : null}
     </>
   );
 }

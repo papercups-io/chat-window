@@ -27,3 +27,18 @@ export type Attachment = {
   file_url: string;
   content_type: string;
 };
+
+export type CustomerMetadata = {
+  name: string;
+  email: string;
+  external_id: string;
+  metadata?: {[key: string]: any};
+  // TODO: include browser info
+  host?: string;
+  pathname?: string;
+  current_url?: string;
+  browser?: string;
+  os?: string;
+  ip?: string;
+  time_zone?: string;
+};

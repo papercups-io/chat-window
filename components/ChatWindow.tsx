@@ -13,7 +13,7 @@ import {
   shouldActivateGameMode,
   setupPostMessageHandlers,
 } from '../helpers/utils';
-import {Message} from '../helpers/types';
+import {CustomerMetadata, Message} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
@@ -33,7 +33,7 @@ type Props = {
   newMessagesNotificationText?: string;
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
-  customer?: API.CustomerMetadata;
+  customer?: CustomerMetadata;
   companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
@@ -320,7 +320,7 @@ class ChatWindow extends React.Component<Props, State> {
   // Check if we have a matching customer based on the `external_id` provided
   // in the customer metadata. Otherwise, fallback to the cached customer id.
   checkForExistingCustomer = async (
-    metadata?: API.CustomerMetadata,
+    metadata?: CustomerMetadata,
     defaultCustomerId?: string | null
   ): Promise<string | null> => {
     if (!metadata || !metadata?.external_id) {
@@ -365,7 +365,7 @@ class ChatWindow extends React.Component<Props, State> {
   // until the customer initiates the first message to create the conversation.
   fetchLatestConversation = async (
     cachedCustomerId?: string | null,
-    metadata?: API.CustomerMetadata
+    metadata?: CustomerMetadata
   ) => {
     const customerId = await this.checkForExistingCustomer(
       metadata,
@@ -477,7 +477,7 @@ class ChatWindow extends React.Component<Props, State> {
   // to make it easier to identify customers in the dashboard.
   updateExistingCustomer = async (
     customerId: string,
-    metadata?: API.CustomerMetadata
+    metadata?: CustomerMetadata
   ) => {
     if (!metadata) {
       return;

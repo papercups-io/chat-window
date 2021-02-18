@@ -1,21 +1,7 @@
 import request from 'superagent';
 import {DEFAULT_BASE_URL} from './config';
 import {now} from './utils';
-
-export type CustomerMetadata = {
-  name: string;
-  email: string;
-  external_id: string;
-  metadata?: {[key: string]: any};
-  // TODO: include browser info
-  host?: string;
-  pathname?: string;
-  current_url?: string;
-  browser?: string;
-  os?: string;
-  ip?: string;
-  time_zone?: string;
-};
+import {CustomerMetadata} from './types';
 
 const EMPTY_METADATA = {} as CustomerMetadata;
 
