@@ -6,47 +6,6 @@ import SendIcon from './SendIcon';
 import PaperclipIcon from './PaperclipIcon';
 import {Attachment, Message} from '../helpers/types';
 
-const UploadFileButton = ({isDisabled, accountId, baseUrl, onSuccess}: any) => {
-  const props = {
-    action: `${baseUrl}/api/upload`,
-    data: {account_id: accountId},
-    multiple: true,
-    headers: {
-      'X-Requested-With': null,
-    },
-    onStart: (file: File) => {
-      console.log('onStart', file.name);
-    },
-    onSuccess({data}: {data: Attachment}) {
-      console.log('onSuccess', data);
-      onSuccess(data);
-    },
-    onError(err: any) {
-      console.log('onError', err);
-    },
-  };
-
-  return (
-    <Upload {...props}>
-      <Button
-        variant="link"
-        disabled={isDisabled}
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: '50%',
-          height: '36px',
-          width: '36px',
-          padding: 0,
-        }}
-      >
-        <PaperclipIcon width={16} height={16} />
-      </Button>
-    </Upload>
-  );
-};
-
 const ChatFooter = ({
   placeholder,
   emailInputPlaceholder,
@@ -66,19 +25,20 @@ const ChatFooter = ({
 }) => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [error, setError] = React.useState<any>(null);
   const messageInput = React.useRef(null);
 
   const hasValidEmail = email && email.length > 5 && email.indexOf('@') !== -1;
+  const isDisabled = isUploading || isSending;
 
-  const handleMessageChange = (e: any) => {
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setMessage(e.target.value);
-  };
 
-  const handleEmailChange = (e: any) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setEmail(e.target.value);
-  };
 
-  const handleSetEmail = (e?: any) => {
+  const handleSetEmail = (e?: React.FormEvent<HTMLFormElement>) => {
     e && e.preventDefault();
 
     if (messageInput.current) {
@@ -86,7 +46,7 @@ const ChatFooter = ({
     }
   };
 
-  const handleSendMessage = (e?: any) => {
+  const handleSendMessage = (e?: React.FormEvent<HTMLFormElement>) => {
     e && e.preventDefault();
 
     onSendMessage({body: message}, email);
@@ -94,13 +54,20 @@ const ChatFooter = ({
     setEmail('');
   };
 
-  const handleSendFile = (file: Attachment) => {
-    if (file && file.id) {
-      console.log('Sending file!', file);
+  const handleUploadStarted = () => setIsUploading(true);
 
+  const handleUploadError = (err: any) => {
+    setError(err);
+    setIsUploading(false);
+  };
+
+  const handleUploadSuccess = ({data: file}: {data: Attachment}) => {
+    if (file && file.id) {
       onSendMessage({body: message, file_ids: [file.id]}, email);
       setMessage('');
       setEmail('');
+      setIsUploading(false);
+      setError(null);
     }
   };
 
@@ -143,23 +110,46 @@ const ChatFooter = ({
               maxRows={4}
               autoFocus
               value={message}
-              disabled={shouldRequireEmail && !hasValidEmail}
+              disabled={isDisabled || (shouldRequireEmail && !hasValidEmail)}
               onKeyDown={handleKeyDown}
               onChange={handleMessageChange}
             />
           </Box>
 
           <Flex pl={3}>
-            <UploadFileButton
-              accountId={accountId}
-              baseUrl={baseUrl}
-              onSuccess={handleSendFile}
-            />
+            <Upload
+              action={`${baseUrl}/api/upload`}
+              data={{account_id: accountId}}
+              headers={{'X-Requested-With': null}}
+              onStart={handleUploadStarted}
+              onSuccess={handleUploadSuccess}
+              onError={handleUploadError}
+            >
+              <Button
+                variant="link"
+                disabled={isDisabled}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: '50%',
+                  height: '36px',
+                  width: '36px',
+                  padding: 0,
+                }}
+              >
+                <PaperclipIcon
+                  width={16}
+                  height={16}
+                  fill={error ? 'red' : 'gray'}
+                />
+              </Button>
+            </Upload>
 
             <Button
               variant="primary"
               type="submit"
-              disabled={isSending}
+              disabled={isDisabled}
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
