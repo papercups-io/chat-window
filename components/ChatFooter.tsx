@@ -127,6 +127,7 @@ const ChatFooter = ({
             >
               <Button
                 variant="link"
+                type="button"
                 disabled={isDisabled}
                 sx={{
                   display: 'flex',
