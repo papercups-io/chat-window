@@ -96,7 +96,7 @@ const ChatFooter = ({
 
       <form onSubmit={handleSendMessage}>
         <Flex sx={{alignItems: 'center'}} py={2}>
-          <Box mr={3} sx={{flex: 1}}>
+          <Box mr={2} sx={{flex: 1}}>
             <ResizableTextArea
               sx={{
                 fontFamily: 'body',
@@ -116,7 +116,7 @@ const ChatFooter = ({
             />
           </Box>
 
-          <Flex pl={3}>
+          <Flex>
             <Upload
               action={`${baseUrl}/api/upload`}
               data={{account_id: accountId}}
