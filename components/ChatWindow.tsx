@@ -12,8 +12,9 @@ import {
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
+  debounce,
 } from '../helpers/utils';
-import {Message} from '../helpers/types';
+import {Config, Message} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
@@ -47,12 +48,14 @@ type State = {
   customerId: string;
   conversationId: string | null;
   availableAgents: Array<any>;
+  isLoaded: boolean;
   isSending: boolean;
   isOpen: boolean;
   isTransitioning: boolean;
   isGameMode?: boolean;
   shouldDisplayNotifications: boolean;
   shouldDisplayBranding: boolean;
+  forceRequireEmailUpfront?: boolean;
 };
 
 class ChatWindow extends React.Component<Props, State> {
@@ -74,12 +77,14 @@ class ChatWindow extends React.Component<Props, State> {
       customerId: null,
       availableAgents: [],
       conversationId: null,
+      isLoaded: false,
       isSending: false,
       isOpen: false,
       isTransitioning: false,
       isGameMode: false,
       shouldDisplayNotifications: false,
       shouldDisplayBranding: false,
+      forceRequireEmailUpfront: false,
     };
   }
 
@@ -114,6 +119,7 @@ class ChatWindow extends React.Component<Props, State> {
     await this.fetchLatestConversation(customerId, metadata);
 
     this.emit('chat:loaded');
+    this.setState({isLoaded: true});
 
     if (this.isOnDeprecatedVersion()) {
       console.warn('You are currently on a deprecated version of Papercups.');
@@ -129,6 +135,30 @@ class ChatWindow extends React.Component<Props, State> {
       }
     });
   }
+
+  async componentDidUpdate(prevProps: Props) {
+    if (!this.state.isLoaded) {
+      return;
+    }
+
+    const {greeting, shouldRequireEmail} = this.props;
+
+    if (greeting !== prevProps.greeting) {
+      this.debouncedHandleGreetingUpdated(greeting, prevProps.greeting);
+    }
+
+    if (shouldRequireEmail !== prevProps.shouldRequireEmail) {
+      this.setState({forceRequireEmailUpfront: shouldRequireEmail});
+    }
+  }
+
+  debouncedHandleGreetingUpdated = debounce(async () => {
+    const {customerId: cachedCustomerId, customer: metadata} = this.props;
+    const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
+    const customerId = isValidCustomer ? cachedCustomerId : null;
+
+    await this.fetchLatestConversation(customerId, metadata);
+  }, 800);
 
   emit = (event: string, payload?: any) => {
     this.logger.debug('Sending event from iframe:', {event, payload});
@@ -155,6 +185,8 @@ class ChatWindow extends React.Component<Props, State> {
         return this.handlePapercupsPlan(payload);
       case 'papercups:ping':
         return this.logger.debug('Pong!');
+      case 'config:update':
+        return this.logger.debug('Config updated dynamically:', payload);
       default:
         return null;
     }
@@ -692,6 +724,10 @@ class ChatWindow extends React.Component<Props, State> {
   // If this is true, we don't allow the customer to send any messages
   // until they enter an email address in the chat widget.
   askForEmailUpfront = () => {
+    if (this.state.forceRequireEmailUpfront) {
+      return true;
+    }
+
     const {customer, shouldRequireEmail} = this.props;
     const {customerId, messages = []} = this.state;
 
@@ -722,14 +758,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   isOnDeprecatedVersion = (): boolean => {
-    const {accountId, version = '1.0.0'} = this.props;
-
-    // TODO: remove after testing
-    if (accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
-      return false;
-    }
-
-    return version < '1.1.2';
+    return this.props.version < '1.1.2';
   };
 
   renderEmbeddedGame() {
