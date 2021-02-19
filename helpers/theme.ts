@@ -39,6 +39,7 @@ export const getThemeConfig = (settings: ThemeSettings) => {
       lighter: overrides.light,
       secondary: '#722ed1',
       green: '#52c41a',
+      red: '#ff4d4f',
       muted: '#f0f0f0',
       gray: 'rgba(0, 0, 0, 0.45)',
       // TODO: come up with better names!
@@ -72,6 +73,20 @@ export const getThemeConfig = (settings: ThemeSettings) => {
         '&:active': {
           background: overrides.dark,
           borderColor: overrides.dark,
+        },
+      },
+      link: {
+        cursor: 'pointer',
+        outline: 0,
+        transition: '0.2s',
+        backgroundColor: 'background',
+        '&:hover': {
+          backgroundColor: 'offset',
+          borderColor: 'offset',
+        },
+        '&:active': {
+          backgroundColor: 'offset',
+          borderColor: 'offset',
         },
       },
     },

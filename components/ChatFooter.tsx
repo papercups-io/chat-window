@@ -1,36 +1,44 @@
 import React from 'react';
 import {Box, Button, Flex, Input} from 'theme-ui';
+import Upload from 'rc-upload';
 import ResizableTextArea from './ResizableTextArea';
 import SendIcon from './SendIcon';
+import PaperclipIcon from './PaperclipIcon';
+import {Attachment, Message} from '../helpers/types';
 
 const ChatFooter = ({
   placeholder,
   emailInputPlaceholder,
   isSending,
   shouldRequireEmail,
+  accountId,
+  baseUrl,
   onSendMessage,
 }: {
   placeholder?: string;
   emailInputPlaceholder?: string;
   isSending: boolean;
   shouldRequireEmail?: boolean;
-  onSendMessage: (message: string, email?: string) => Promise<void>;
+  accountId: string;
+  baseUrl?: string;
+  onSendMessage: (message: Partial<Message>, email?: string) => Promise<void>;
 }) => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [error, setError] = React.useState<any>(null);
   const messageInput = React.useRef(null);
 
   const hasValidEmail = email && email.length > 5 && email.indexOf('@') !== -1;
+  const isDisabled = isUploading || isSending;
 
-  const handleMessageChange = (e: any) => {
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setMessage(e.target.value);
-  };
 
-  const handleEmailChange = (e: any) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setEmail(e.target.value);
-  };
 
-  const handleSetEmail = (e?: any) => {
+  const handleSetEmail = (e?: React.FormEvent<HTMLFormElement>) => {
     e && e.preventDefault();
 
     if (messageInput.current) {
@@ -38,12 +46,29 @@ const ChatFooter = ({
     }
   };
 
-  const handleSendMessage = (e?: any) => {
+  const handleSendMessage = (e?: React.FormEvent<HTMLFormElement>) => {
     e && e.preventDefault();
 
-    onSendMessage(message, email);
+    onSendMessage({body: message}, email);
     setMessage('');
     setEmail('');
+  };
+
+  const handleUploadStarted = () => setIsUploading(true);
+
+  const handleUploadError = (err: any) => {
+    setError(err);
+    setIsUploading(false);
+  };
+
+  const handleUploadSuccess = ({data: file}: {data: Attachment}) => {
+    if (file && file.id) {
+      onSendMessage({body: message, file_ids: [file.id]}, email);
+      setMessage('');
+      setEmail('');
+      setIsUploading(false);
+      setError(null);
+    }
   };
 
   const handleKeyDown = (e: any) => {
@@ -85,17 +110,46 @@ const ChatFooter = ({
               maxRows={4}
               autoFocus
               value={message}
-              disabled={shouldRequireEmail && !hasValidEmail}
+              disabled={isDisabled || (shouldRequireEmail && !hasValidEmail)}
               onKeyDown={handleKeyDown}
               onChange={handleMessageChange}
             />
           </Box>
 
-          <Box pl={3}>
+          <Flex pl={3}>
+            <Upload
+              action={`${baseUrl}/api/upload`}
+              data={{account_id: accountId}}
+              headers={{'X-Requested-With': null}}
+              onStart={handleUploadStarted}
+              onSuccess={handleUploadSuccess}
+              onError={handleUploadError}
+            >
+              <Button
+                variant="link"
+                disabled={isDisabled}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: '50%',
+                  height: '36px',
+                  width: '36px',
+                  padding: 0,
+                }}
+              >
+                <PaperclipIcon
+                  width={16}
+                  height={16}
+                  fill={error ? 'red' : 'gray'}
+                />
+              </Button>
+            </Upload>
+
             <Button
               variant="primary"
               type="submit"
-              disabled={isSending}
+              disabled={isDisabled}
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
@@ -108,7 +162,7 @@ const ChatFooter = ({
             >
               <SendIcon width={16} height={16} fill="background" />
             </Button>
-          </Box>
+          </Flex>
         </Flex>
       </form>
     </Box>

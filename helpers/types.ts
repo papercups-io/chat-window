@@ -17,6 +17,7 @@ export type Message = {
   user_id?: number;
   user?: User;
   type?: 'bot' | 'agent' | 'customer';
+  file_ids?: Array<string>;
   attachments?: Array<Attachment>;
 };
 
@@ -25,4 +26,19 @@ export type Attachment = {
   filename: string;
   file_url: string;
   content_type: string;
+};
+
+export type CustomerMetadata = {
+  name: string;
+  email: string;
+  external_id: string;
+  metadata?: {[key: string]: any};
+  // TODO: include browser info
+  host?: string;
+  pathname?: string;
+  current_url?: string;
+  browser?: string;
+  os?: string;
+  ip?: string;
+  time_zone?: string;
 };
