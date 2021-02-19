@@ -102,3 +102,17 @@ export const fetchCustomerConversations = async (
     .query({customer_id: customerId, account_id: accountId})
     .then((res) => res.body.data);
 };
+
+export const upload = async (
+  accountId: string,
+  file: any,
+  baseUrl = DEFAULT_BASE_URL
+) => {
+  return request
+    .post(`${baseUrl}/api/upload`)
+    .send({
+      file,
+      account_id: accountId,
+    })
+    .then((res) => res.body.data);
+};
