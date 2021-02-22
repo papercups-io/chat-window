@@ -1,6 +1,9 @@
 import React from 'react';
 import {ThemeProvider} from 'theme-ui';
-import ChatWindow from './ChatWindow';
+import ChatBuilder from './ChatBuilder';
+import ChatHeader from './ChatHeader';
+import ChatBody from './ChatBody';
+import ChatFooter from './ChatFooter';
 import {CustomerMetadata} from '../helpers/api';
 import {isDev} from '../helpers/config';
 import {setupPostMessageHandlers} from '../helpers/utils';
@@ -165,27 +168,92 @@ class Wrapper extends React.Component<Props, State> {
     const theme = getThemeConfig({primary: primaryColor});
     const customer = parseCustomerMetadata(metadata);
 
+    const formatted = {
+      accountId,
+      customerId,
+      greeting,
+      companyName,
+      agentAvailableText,
+      agentUnavailableText,
+      title,
+      subtitle,
+      newMessagePlaceholder,
+      emailInputPlaceholder,
+      newMessagesNotificationText,
+      primaryColor,
+      baseUrl,
+      shouldRequireEmail,
+      customer,
+      isMobile,
+      isCloseable,
+      showAgentAvailability: shouldShowAvailability,
+    };
+
     return (
       <ThemeProvider theme={theme}>
-        <ChatWindow
-          title={title}
-          subtitle={subtitle}
-          accountId={accountId}
-          customerId={customerId}
-          greeting={greeting}
-          companyName={companyName}
-          newMessagePlaceholder={newMessagePlaceholder}
-          emailInputPlaceholder={emailInputPlaceholder}
-          newMessagesNotificationText={newMessagesNotificationText}
-          agentAvailableText={agentAvailableText}
-          agentUnavailableText={agentUnavailableText}
-          showAgentAvailability={shouldShowAvailability}
-          shouldRequireEmail={shouldRequireEmail}
-          isMobile={isMobile}
-          isCloseable={isCloseable}
-          baseUrl={baseUrl}
-          customer={customer}
+        <ChatBuilder
+          config={formatted}
           version={version}
+          header={({config, state, onClose}) => {
+            const {
+              title = 'Welcome!',
+              subtitle = 'How can we help you?',
+              agentAvailableText = "We're online right now!",
+              agentUnavailableText = "We're away at the moment.",
+              showAgentAvailability,
+              isCloseable,
+            } = config;
+            const {availableAgents = []} = state;
+
+            return (
+              <ChatHeader
+                title={title}
+                subtitle={subtitle}
+                showAgentAvailability={showAgentAvailability}
+                agentAvailableText={agentAvailableText}
+                agentUnavailableText={agentUnavailableText}
+                isCloseable={isCloseable}
+                hasAvailableAgents={availableAgents.length > 0}
+                onClose={onClose}
+              />
+            );
+          }}
+          body={({config, state, scrollToRef}) => {
+            const {companyName} = config;
+            const {customerId, messages = []} = state;
+
+            return (
+              <ChatBody
+                messages={messages}
+                companyName={companyName}
+                customerId={customerId}
+                scrollToRef={scrollToRef}
+              />
+            );
+          }}
+          footer={({config, state, onSendMessage}) => {
+            const {
+              accountId,
+              baseUrl,
+              newMessagePlaceholder = 'Start typing...',
+              emailInputPlaceholder = 'Enter your email',
+            } = config;
+            const {isOpen, isSending} = state;
+
+            return (
+              <ChatFooter
+                key={isOpen ? 1 : 0}
+                accountId={accountId}
+                baseUrl={baseUrl}
+                placeholder={newMessagePlaceholder}
+                emailInputPlaceholder={emailInputPlaceholder}
+                isSending={isSending}
+                // FIXME
+                shouldRequireEmail={false}
+                onSendMessage={onSendMessage}
+              />
+            );
+          }}
         />
       </ThemeProvider>
     );

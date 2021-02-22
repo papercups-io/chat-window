@@ -1,17 +1,18 @@
 import React from 'react';
-import {Box, Button, Flex, Heading, Text, Link} from 'theme-ui';
+import {Box, Button, Flex, Link} from 'theme-ui';
 import {Socket, Presence} from 'phoenix';
 import {motion} from 'framer-motion';
-import ChatMessage, {PopupChatMessage} from './ChatMessage';
-import ChatFooter from './ChatFooter';
-import AgentAvailability from './AgentAvailability';
+import {PopupChatMessage} from './ChatMessage';
 import PapercupsBranding from './PapercupsBranding';
-import CloseIcon from './CloseIcon';
 import * as API from '../helpers/api';
+import {CustomerMetadata} from '../helpers/api';
 import {
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
+  isCustomerMessage,
+  areDatesEqual,
+  isValidUuid,
 } from '../helpers/utils';
 import {Message} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
@@ -21,7 +22,7 @@ import {
   addVisibilityEventListener,
 } from '../helpers/visibility';
 
-type Props = {
+type Config = {
   accountId: string;
   customerId?: string;
   title?: string;
@@ -33,13 +34,31 @@ type Props = {
   newMessagesNotificationText?: string;
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
-  customer?: API.CustomerMetadata;
+  customer?: CustomerMetadata;
   companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
   showAgentAvailability?: boolean;
   isCloseable?: boolean;
+};
+
+interface Options {
+  config: Config;
+  state: State;
+}
+
+type HeaderProps = Options & {onClose: (e: any) => void};
+type BodyProps = Options & {scrollToRef: (el: any) => void};
+type FooterProps = Options & {
+  onSendMessage: (message: Partial<Message>, email?: string) => Promise<any>;
+};
+
+type Props = {
   version?: string;
+  config?: Config;
+  header: (options: HeaderProps) => React.ReactElement;
+  body: (options: BodyProps) => React.ReactElement;
+  footer: (options: FooterProps) => React.ReactElement;
 };
 
 type State = {
@@ -55,7 +74,7 @@ type State = {
   shouldDisplayBranding: boolean;
 };
 
-class ChatWindow extends React.Component<Props, State> {
+class ChatBuilder extends React.Component<Props, State> {
   scrollToEl: any = null;
 
   subscriptions: Array<() => void> = [];
@@ -88,7 +107,7 @@ class ChatWindow extends React.Component<Props, State> {
       baseUrl,
       customerId: cachedCustomerId,
       customer: metadata,
-    } = this.props;
+    } = this.props.config;
     const win = window as any;
     const doc = (document || win.document) as any;
     // TODO: make it possible to opt into debug mode
@@ -161,7 +180,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   listenForNewConversations = (customerId: string) => {
-    const {customer: metadata} = this.props;
+    const {customer: metadata} = this.props.config;
 
     const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
 
@@ -186,7 +205,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   listenForAgentAvailability = () => {
-    const {accountId} = this.props;
+    const {accountId} = this.props.config;
     const room = this.socket.channel(`room:${accountId}`, {});
 
     room
@@ -263,7 +282,7 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   getDefaultGreeting = (ts?: number): Array<Message> => {
-    const {greeting} = this.props;
+    const {greeting} = this.props.config;
 
     if (!greeting) {
       return [];
@@ -280,26 +299,16 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
-  isValidUuid = (id: string) => {
-    if (!id || !id.length) {
-      return false;
-    }
-
-    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    return regex.test(id);
-  };
-
   isValidCustomer = async (customerId?: string | null) => {
     if (!customerId || !customerId.length) {
       return false;
     }
 
-    if (!this.isValidUuid(customerId)) {
+    if (!isValidUuid(customerId)) {
       return false;
     }
 
-    const {baseUrl, accountId} = this.props;
+    const {baseUrl, accountId} = this.props.config;
 
     try {
       const isValidCustomer = await API.isValidCustomer(
@@ -329,7 +338,7 @@ class ChatWindow extends React.Component<Props, State> {
       return defaultCustomerId;
     }
 
-    const {accountId, baseUrl} = this.props;
+    const {accountId, baseUrl} = this.props.config;
     // NB: we check for matching existing customers based on external_id, email,
     // and host -- this may break across subdomains, but I think this is fine for now.
     const {email, host, external_id: externalId} = metadata;
@@ -380,7 +389,7 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    const {accountId, baseUrl} = this.props;
+    const {accountId, baseUrl} = this.props.config;
 
     this.logger.debug('Fetching conversations for customer:', customerId);
 
@@ -437,7 +446,7 @@ class ChatWindow extends React.Component<Props, State> {
     existingCustomerId?: string,
     email?: string
   ): Promise<string> => {
-    const {baseUrl, customer} = this.props;
+    const {baseUrl, customer} = this.props.config;
     const metadata = email ? {...customer, email} : customer;
 
     try {
@@ -484,7 +493,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     try {
-      const {baseUrl} = this.props;
+      const {baseUrl} = this.props.config;
 
       await API.updateCustomerMetadata(customerId, metadata, baseUrl);
     } catch (err) {
@@ -496,7 +505,7 @@ class ChatWindow extends React.Component<Props, State> {
     existingCustomerId?: string,
     email?: string
   ) => {
-    const {accountId, baseUrl} = this.props;
+    const {accountId, baseUrl} = this.props.config;
     const customerId = await this.createOrUpdateCustomer(
       accountId,
       existingCustomerId,
@@ -543,17 +552,6 @@ class ChatWindow extends React.Component<Props, State> {
     this.scrollIntoView();
   };
 
-  isCustomerMessage = (message: Message, customerId: string): boolean => {
-    return (
-      message.customer_id === customerId ||
-      (message.sent_at && message.type === 'customer')
-    );
-  };
-
-  areDatesEqual = (x: string, y: string) => {
-    return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
-  };
-
   emitUnseenMessage = (message: Message) => {
     this.emit('messages:unseen', {message});
   };
@@ -576,7 +574,7 @@ class ChatWindow extends React.Component<Props, State> {
     const unsent = messages.find(
       (m) =>
         !m.created_at &&
-        this.areDatesEqual(m.sent_at, message.sent_at) &&
+        areDatesEqual(m.sent_at, message.sent_at) &&
         (m.body === message.body || (!m.body && !message.body))
     );
     const updated = unsent
@@ -692,7 +690,7 @@ class ChatWindow extends React.Component<Props, State> {
   // If this is true, we don't allow the customer to send any messages
   // until they enter an email address in the chat widget.
   askForEmailUpfront = () => {
-    const {customer, shouldRequireEmail} = this.props;
+    const {customer, shouldRequireEmail} = this.props.config;
     const {customerId, messages = []} = this.state;
 
     if (!shouldRequireEmail) {
@@ -705,7 +703,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     // TODO: figure out what this actual logic should be...
     const previouslySentMessages = messages.find((msg) =>
-      this.isCustomerMessage(msg, customerId)
+      isCustomerMessage(msg, customerId)
     );
 
     return !previouslySentMessages;
@@ -722,18 +720,13 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   isOnDeprecatedVersion = (): boolean => {
-    const {accountId, version = '1.0.0'} = this.props;
-
-    // TODO: remove after testing
-    if (accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
-      return false;
-    }
+    const {version = '1.0.0'} = this.props;
 
     return version < '1.1.2';
   };
 
   renderEmbeddedGame() {
-    const {isMobile = false} = this.props;
+    const {isMobile = false} = this.props.config;
 
     return (
       <Flex
@@ -786,7 +779,7 @@ class ChatWindow extends React.Component<Props, State> {
     const {
       newMessagesNotificationText = 'View new messages',
       isMobile = false,
-    } = this.props;
+    } = this.props.config;
     const {customerId, messages = []} = this.state;
     const unread = messages
       .filter((msg) => {
@@ -798,7 +791,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         // NB: `msg.type` doesn't come from the server, it's just a way to
         // help identify unsent messages in the frontend for now
-        const isMe = this.isCustomerMessage(msg, customerId);
+        const isMe = isCustomerMessage(msg, customerId);
 
         return !isMe;
       })
@@ -853,25 +846,8 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   render() {
+    const {isMobile = false} = this.props.config;
     const {
-      title = 'Welcome!',
-      subtitle = 'How can we help you?',
-      newMessagePlaceholder = 'Start typing...',
-      emailInputPlaceholder = 'Enter your email',
-      agentAvailableText = "We're online right now!",
-      agentUnavailableText = "We're away at the moment.",
-      companyName,
-      isMobile = false,
-      isCloseable = true,
-      showAgentAvailability = false,
-      accountId,
-      baseUrl,
-    } = this.props;
-    const {
-      customerId,
-      messages = [],
-      availableAgents = [],
-      isSending,
       isOpen,
       isTransitioning,
       isGameMode,
@@ -896,9 +872,6 @@ class ChatWindow extends React.Component<Props, State> {
       return null;
     }
 
-    const shouldAskForEmail = this.askForEmailUpfront();
-    const hasAvailableAgents = availableAgents.length > 0;
-
     return (
       <Flex
         className={isMobile ? 'Mobile' : ''}
@@ -910,98 +883,44 @@ class ChatWindow extends React.Component<Props, State> {
           flex: 1,
         }}
       >
-        <Box sx={{bg: 'primary', position: 'relative'}}>
-          <Box pt={3} pb={showAgentAvailability ? 12 : 16} px={20}>
-            {/* TODO: wrap in a button element */}
-            {isCloseable && !this.isOnDeprecatedVersion() && (
-              <CloseIcon
-                className="CloseIcon"
-                width={24}
-                height={24}
-                onClick={this.emitCloseWindow}
-              />
-            )}
-            <Heading
-              as="h2"
-              className="Papercups-heading"
-              sx={{color: 'background', my: 1, mr: 12}}
-            >
-              {title}
-            </Heading>
-            <Text sx={{color: 'offset'}}>{subtitle}</Text>
-          </Box>
-
-          {showAgentAvailability && (
-            <AgentAvailability
-              hasAvailableAgents={hasAvailableAgents}
-              agentAvailableText={agentAvailableText}
-              agentUnavailableText={agentUnavailableText}
-            />
-          )}
+        <Box sx={{position: 'relative'}}>
+          {this.props.header({
+            config: this.props.config,
+            state: this.state,
+            onClose: this.emitCloseWindow,
+          })}
         </Box>
 
         <Box
-          p={3}
           sx={{
             flex: 1,
             boxShadow: 'rgba(0, 0, 0, 0.2) 0px 21px 4px -20px inset',
             overflowY: 'scroll',
           }}
         >
-          {messages.map((msg, key) => {
-            // Slight hack
-            const next = messages[key + 1];
-            const isLastInGroup = next
-              ? msg.customer_id !== next.customer_id
-              : true;
-            const shouldDisplayTimestamp = key === messages.length - 1;
-            // NB: `msg.type` doesn't come from the server, it's just a way to
-            // help identify unsent messages in the frontend for now
-            const isMe = this.isCustomerMessage(msg, customerId);
-
-            return (
-              <motion.div
-                key={key}
-                initial={{opacity: 0, x: isMe ? 2 : -2}}
-                animate={{opacity: 1, x: 0}}
-                transition={{duration: 0.2, ease: 'easeIn'}}
-              >
-                <ChatMessage
-                  key={key}
-                  message={msg}
-                  isMe={isMe}
-                  companyName={companyName}
-                  isLastInGroup={isLastInGroup}
-                  shouldDisplayTimestamp={shouldDisplayTimestamp}
-                />
-              </motion.div>
-            );
+          {this.props.body({
+            config: this.props.config,
+            state: this.state,
+            scrollToRef: (el: any) => (this.scrollToEl = el),
           })}
-          <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
+
         {shouldDisplayBranding && <PapercupsBranding />}
+
         <Box
           sx={{
+            // TODO: make this configurable
             borderTop: '1px solid rgb(230, 230, 230)',
-            // TODO: only show shadow on focus TextArea below
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 100px 0px',
           }}
         >
-          {/*
-            NB: we use a `key` prop here to force re-render on open so
-            that the input will auto-focus appropriately
-          */}
-          <ChatFooter
-            key={isOpen ? 1 : 0}
-            accountId={accountId}
-            baseUrl={baseUrl}
-            placeholder={newMessagePlaceholder}
-            emailInputPlaceholder={emailInputPlaceholder}
-            isSending={isSending}
-            shouldRequireEmail={shouldAskForEmail}
-            onSendMessage={this.handleSendMessage}
-          />
+          {this.props.footer({
+            config: this.props.config,
+            state: this.state,
+            onSendMessage: this.handleSendMessage,
+          })}
         </Box>
+
         <img
           alt="Papercups"
           src="https://papercups.s3.us-east-2.amazonaws.com/papercups-logo.svg"
@@ -1013,4 +932,4 @@ class ChatWindow extends React.Component<Props, State> {
   }
 }
 
-export default ChatWindow;
+export default ChatBuilder;

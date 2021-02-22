@@ -80,7 +80,7 @@ const ChatFooter = ({
   };
 
   return (
-    <Box>
+    <Box px={2}>
       <form onSubmit={handleSetEmail}>
         {shouldRequireEmail && (
           <Box py={1} sx={{borderBottom: '1px solid rgb(230, 230, 230)'}}>

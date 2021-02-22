@@ -1,3 +1,5 @@
+import {Message} from './types';
+
 // TODO: handle this on the server instead
 export function now() {
   const date = new Date();
@@ -60,3 +62,27 @@ export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
     return () => w.detachEvent('message', cb);
   }
 }
+
+export const isCustomerMessage = (
+  message: Message,
+  customerId: string
+): boolean => {
+  return (
+    message.customer_id === customerId ||
+    (message.sent_at && message.type === 'customer')
+  );
+};
+
+export const areDatesEqual = (x: string, y: string) => {
+  return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
+};
+
+export const isValidUuid = (id: string) => {
+  if (!id || !id.length) {
+    return false;
+  }
+
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  return regex.test(id);
+};
