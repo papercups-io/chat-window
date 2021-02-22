@@ -147,6 +147,7 @@ class ChatWindow extends React.Component<Props, State> {
       this.debouncedHandleGreetingUpdated(greeting, prevProps.greeting);
     }
 
+    // FIXME: how can we force email to show up correctly during the preview mode???
     if (shouldRequireEmail !== prevProps.shouldRequireEmail) {
       this.setState({forceRequireEmailUpfront: shouldRequireEmail});
     }
