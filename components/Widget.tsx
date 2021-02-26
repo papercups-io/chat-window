@@ -161,7 +161,7 @@ class Wrapper extends React.Component<Props, State> {
     const shouldRequireEmail = !!Number(requireEmailUpfront);
     const isMobile = !!Number(mobile);
     const isCloseable = !!Number(closeable);
-    const shouldHideAvailability = !!Number(showAgentAvailability);
+    const shouldShowAvailability = !!Number(showAgentAvailability);
     const theme = getThemeConfig({primary: primaryColor});
     const customer = parseCustomerMetadata(metadata);
 
@@ -179,7 +179,7 @@ class Wrapper extends React.Component<Props, State> {
           newMessagesNotificationText={newMessagesNotificationText}
           agentAvailableText={agentAvailableText}
           agentUnavailableText={agentUnavailableText}
-          showAgentAvailability={shouldHideAvailability}
+          showAgentAvailability={shouldShowAvailability}
           shouldRequireEmail={shouldRequireEmail}
           isMobile={isMobile}
           isCloseable={isCloseable}
