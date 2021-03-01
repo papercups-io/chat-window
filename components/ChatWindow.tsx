@@ -592,6 +592,7 @@ class ChatWindow extends React.Component<Props, State> {
         // If the message was not `unsent`, we know it came from the other end,
         // in which case we should indicate that it hasn't been seen yet.
         this.emitUnseenMessage(message);
+        this.playNotificationSound();
       }
     });
   };
@@ -709,6 +710,18 @@ class ChatWindow extends React.Component<Props, State> {
     );
 
     return !previouslySentMessages;
+  };
+
+  playNotificationSound = async (volume = 0.2) => {
+    try {
+      const file = '/alert.mp3';
+      const audio = new Audio(file);
+      audio.volume = volume;
+
+      await audio?.play();
+    } catch (err) {
+      this.logger.error('Failed to play notification sound:', err);
+    }
   };
 
   handleGameLoaded = (e: any) => {
