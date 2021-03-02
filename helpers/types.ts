@@ -1,3 +1,18 @@
+export type CustomerMetadata = {
+  name: string;
+  email: string;
+  external_id: string;
+  metadata?: {[key: string]: any};
+  // TODO: include browser info
+  host?: string;
+  pathname?: string;
+  current_url?: string;
+  browser?: string;
+  os?: string;
+  ip?: string;
+  time_zone?: string;
+};
+
 export type User = {
   id: number;
   email: string;
@@ -26,4 +41,26 @@ export type Attachment = {
   filename: string;
   file_url: string;
   content_type: string;
+};
+
+export type WidgetSettings = {
+  id?: string;
+  subtitle?: string;
+  title?: string;
+  base_url?: string;
+  color?: string;
+  greeting?: string;
+  new_message_placeholder?: string;
+  email_input_placeholder?: string;
+  new_messages_notification_text?: string;
+  is_branding_hidden?: boolean;
+  show_agent_availability?: boolean;
+  agent_available_text?: string;
+  agent_unavailable_text?: string;
+  require_email_upfront?: boolean;
+  is_open_by_default?: boolean;
+  custom_icon_url?: string;
+  iframe_url_override?: string;
+  icon_variant?: 'outlined' | 'filled';
+  account?: Account;
 };

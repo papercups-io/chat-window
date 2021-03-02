@@ -13,7 +13,7 @@ import {
   shouldActivateGameMode,
   setupPostMessageHandlers,
 } from '../helpers/utils';
-import {Message} from '../helpers/types';
+import {Message, CustomerMetadata, WidgetSettings} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
@@ -33,7 +33,7 @@ type Props = {
   newMessagesNotificationText?: string;
   shouldRequireEmail?: boolean;
   isMobile?: boolean;
-  customer?: API.CustomerMetadata;
+  customer?: CustomerMetadata;
   companyName?: string;
   agentAvailableText?: string;
   agentUnavailableText?: string;
@@ -47,6 +47,7 @@ type State = {
   customerId: string;
   conversationId: string | null;
   availableAgents: Array<any>;
+  settings: WidgetSettings;
   isSending: boolean;
   isOpen: boolean;
   isTransitioning: boolean;
@@ -73,6 +74,7 @@ class ChatWindow extends React.Component<Props, State> {
       // TODO: remove this from state if possible, just use props instead?
       customerId: null,
       availableAgents: [],
+      settings: {} as WidgetSettings,
       conversationId: null,
       isSending: false,
       isOpen: false,
@@ -98,8 +100,9 @@ class ChatWindow extends React.Component<Props, State> {
 
     const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
     const customerId = isValidCustomer ? cachedCustomerId : null;
+    const settings = await this.fetchWidgetSettings();
 
-    this.setState({customerId});
+    this.setState({customerId, settings});
     this.subscriptions = [
       setupPostMessageHandlers(win, this.postMessageHandlers),
       addVisibilityEventListener(doc, this.handleVisibilityChange),
@@ -158,6 +161,15 @@ class ChatWindow extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  fetchWidgetSettings = async (): Promise<WidgetSettings> => {
+    const {accountId, baseUrl} = this.props;
+    const empty = {} as WidgetSettings;
+
+    return API.fetchWidgetSettings(accountId, baseUrl)
+      .then((settings) => settings || empty)
+      .catch(() => empty);
   };
 
   listenForNewConversations = (customerId: string) => {
@@ -241,11 +253,11 @@ class ChatWindow extends React.Component<Props, State> {
   handlePapercupsPlan = (payload: any = {}) => {
     this.logger.debug('Handling subscription plan:', payload);
 
-    // TODO: figure out the best way to determine when to display branding
+    const {settings = {} as WidgetSettings} = this.state;
     const plan = payload && payload.plan;
-    const shouldDisplayBranding = plan
-      ? String(plan).toLowerCase() === 'starter'
-      : false;
+    const shouldHideBranding = settings && settings.is_branding_hidden;
+    const isTeamPlan = plan && String(plan).toLowerCase() === 'team';
+    const shouldDisplayBranding = !(isTeamPlan && shouldHideBranding);
 
     this.setState({shouldDisplayBranding});
   };
@@ -320,7 +332,7 @@ class ChatWindow extends React.Component<Props, State> {
   // Check if we have a matching customer based on the `external_id` provided
   // in the customer metadata. Otherwise, fallback to the cached customer id.
   checkForExistingCustomer = async (
-    metadata?: API.CustomerMetadata,
+    metadata?: CustomerMetadata,
     defaultCustomerId?: string | null
   ): Promise<string | null> => {
     if (!metadata || !metadata?.external_id) {
@@ -365,7 +377,7 @@ class ChatWindow extends React.Component<Props, State> {
   // until the customer initiates the first message to create the conversation.
   fetchLatestConversation = async (
     cachedCustomerId?: string | null,
-    metadata?: API.CustomerMetadata
+    metadata?: CustomerMetadata
   ) => {
     const customerId = await this.checkForExistingCustomer(
       metadata,
@@ -477,7 +489,7 @@ class ChatWindow extends React.Component<Props, State> {
   // to make it easier to identify customers in the dashboard.
   updateExistingCustomer = async (
     customerId: string,
-    metadata?: API.CustomerMetadata
+    metadata?: CustomerMetadata
   ) => {
     if (!metadata) {
       return;
