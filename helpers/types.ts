@@ -27,3 +27,26 @@ export type Attachment = {
   file_url: string;
   content_type: string;
 };
+
+export type Config = {
+  title?: string;
+  subtitle?: string;
+  primaryColor?: string;
+  accountId?: string;
+  baseUrl?: string;
+  greeting?: string;
+  customerId?: string;
+  newMessagePlaceholder?: string;
+  emailInputPlaceholder?: string;
+  newMessagesNotificationText?: string;
+  companyName?: string;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
+  showAgentAvailability?: boolean;
+  defaultIsOpen?: boolean;
+  requireEmailUpfront?: boolean;
+  closeable?: boolean;
+  mobile?: boolean;
+  metadata?: string; // stringified CustomerMetadata JSON
+  version?: string;
+};

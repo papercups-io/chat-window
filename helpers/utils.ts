@@ -60,3 +60,13 @@ export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
     return () => w.detachEvent('message', cb);
   }
 }
+
+export function debounce(fn: any, wait: number) {
+  let timeout: any;
+
+  return function (...args: any) {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => fn.call(this, ...args), wait);
+  };
+}

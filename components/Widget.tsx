@@ -6,29 +6,7 @@ import {isDev} from '../helpers/config';
 import {setupPostMessageHandlers} from '../helpers/utils';
 import getThemeConfig from '../helpers/theme';
 import Logger from '../helpers/logger';
-
-type Config = {
-  title?: string;
-  subtitle?: string;
-  primaryColor?: string;
-  accountId?: string;
-  baseUrl?: string;
-  greeting?: string;
-  customerId?: string;
-  newMessagePlaceholder?: string;
-  emailInputPlaceholder?: string;
-  newMessagesNotificationText?: string;
-  companyName?: string;
-  agentAvailableText?: string;
-  agentUnavailableText?: string;
-  showAgentAvailability?: boolean;
-  defaultIsOpen?: boolean;
-  requireEmailUpfront?: boolean;
-  closeable?: boolean;
-  mobile?: boolean;
-  metadata?: string; // stringified CustomerMetadata JSON
-  version?: string;
-};
+import {Config} from '../helpers/types';
 
 const parseCustomerMetadata = (str: string): CustomerMetadata => {
   try {
@@ -54,6 +32,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     newMessagePlaceholder,
     emailInputPlaceholder,
     newMessagesNotificationText,
+    requireEmailUpfront,
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
@@ -61,7 +40,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     version,
   } = payload;
 
-  return {
+  const updates = {
     accountId,
     title,
     subtitle,
@@ -72,12 +51,23 @@ const sanitizeConfigPayload = (payload: any): Config => {
     newMessagePlaceholder,
     emailInputPlaceholder,
     newMessagesNotificationText,
+    requireEmailUpfront,
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
     closeable,
     version,
   };
+
+  return Object.keys(updates).reduce((acc, key) => {
+    const value = updates[key];
+
+    if (typeof value === 'undefined') {
+      return acc;
+    }
+
+    return {...acc, [key]: value};
+  }, {});
 };
 
 type Props = {config: Config};
