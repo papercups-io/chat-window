@@ -28,6 +28,7 @@ type Props = {
   subtitle?: string;
   baseUrl?: string;
   greeting?: string;
+  awayMessage?: string;
   newMessagePlaceholder?: string;
   emailInputPlaceholder?: string;
   newMessagesNotificationText?: string;
@@ -275,17 +276,24 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   getDefaultGreeting = (ts?: number): Array<Message> => {
-    const {greeting} = this.props;
+    const {greeting, awayMessage} = this.props;
 
-    if (!greeting) {
+    if (!greeting && !awayMessage) {
       return [];
     }
+
+    const {settings, availableAgents = []} = this.state;
+    const hasAvailableAgents = availableAgents.length > 0;
+    const hasAwayMessage = awayMessage && awayMessage.length > 0;
+    const isOutsideWorkingHours = settings.account?.is_outside_working_hours;
+    const shouldDisplayAwayMessage =
+      hasAwayMessage && isOutsideWorkingHours && !hasAvailableAgents;
 
     return [
       {
         type: 'bot',
         customer_id: 'bot',
-        body: greeting, // 'Hi there! How can I help you?',
+        body: shouldDisplayAwayMessage ? awayMessage : greeting,
         created_at: new Date().toISOString(), // TODO: what should this be?
         seen_at: new Date().toISOString(),
       },

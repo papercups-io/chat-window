@@ -1,7 +1,7 @@
 export type CustomerMetadata = {
-  name: string;
-  email: string;
-  external_id: string;
+  name?: string;
+  email?: string;
+  external_id?: string;
   metadata?: {[key: string]: any};
   // TODO: include browser info
   host?: string;
@@ -10,6 +10,15 @@ export type CustomerMetadata = {
   browser?: string;
   os?: string;
   ip?: string;
+  time_zone?: string;
+};
+
+export type Account = {
+  id: string;
+  company_name: string;
+  current_minutes_since_midnight: number;
+  is_outside_working_hours?: boolean;
+  subscription_plan?: string;
   time_zone?: string;
 };
 
