@@ -14,6 +14,7 @@ type Config = {
   accountId?: string;
   baseUrl?: string;
   greeting?: string;
+  awayMessage?: string;
   customerId?: string;
   newMessagePlaceholder?: string;
   emailInputPlaceholder?: string;
@@ -50,6 +51,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     primaryColor,
     baseUrl,
     greeting,
+    awayMessage,
     companyName,
     newMessagePlaceholder,
     emailInputPlaceholder,
@@ -68,6 +70,7 @@ const sanitizeConfigPayload = (payload: any): Config => {
     primaryColor,
     baseUrl,
     greeting,
+    awayMessage,
     companyName,
     newMessagePlaceholder,
     emailInputPlaceholder,
@@ -140,6 +143,7 @@ class Wrapper extends React.Component<Props, State> {
       accountId,
       customerId,
       greeting,
+      awayMessage,
       companyName,
       agentAvailableText,
       agentUnavailableText,
@@ -173,6 +177,7 @@ class Wrapper extends React.Component<Props, State> {
           accountId={accountId}
           customerId={customerId}
           greeting={greeting}
+          awayMessage={awayMessage}
           companyName={companyName}
           newMessagePlaceholder={newMessagePlaceholder}
           emailInputPlaceholder={emailInputPlaceholder}
