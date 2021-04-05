@@ -54,6 +54,7 @@ type State = {
   isTransitioning: boolean;
   isGameMode?: boolean;
   shouldDisplayNotifications: boolean;
+  popUpInitialMessage?: boolean;
   shouldDisplayBranding: boolean;
 };
 
@@ -82,6 +83,7 @@ class ChatWindow extends React.Component<Props, State> {
       isTransitioning: false,
       isGameMode: false,
       shouldDisplayNotifications: false,
+      popUpInitialMessage: false,
       shouldDisplayBranding: false,
     };
   }
@@ -150,9 +152,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         return this.updateExistingCustomer(customerId, metadata);
       case 'notifications:display':
-        return this.setState({
-          shouldDisplayNotifications: !!payload.shouldDisplayNotifications,
-        });
+        return this.handleDisplayNotifications(payload);
       case 'papercups:toggle':
         return this.handleToggleDisplay(payload);
       case 'papercups:plan':
@@ -162,6 +162,31 @@ class ChatWindow extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  handleDisplayNotifications = (payload: any) => {
+    const {
+      shouldDisplayNotifications = false,
+      popUpInitialMessage = false,
+    } = payload;
+
+    return this.setState(
+      {
+        shouldDisplayNotifications,
+        popUpInitialMessage,
+      },
+      () => {
+        const unread = this.getUnreadMessages();
+
+        if (
+          shouldDisplayNotifications &&
+          popUpInitialMessage &&
+          unread.length === 0
+        ) {
+          this.markMessagesAsSeen();
+        }
+      }
+    );
   };
 
   fetchWidgetSettings = async (): Promise<WidgetSettings> => {
@@ -275,7 +300,7 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
-  getDefaultGreeting = (ts?: number): Array<Message> => {
+  getDefaultGreeting = (overrides = {}): Array<Message> => {
     const {greeting, awayMessage} = this.props;
 
     if (!greeting && !awayMessage) {
@@ -295,7 +320,7 @@ class ChatWindow extends React.Component<Props, State> {
         customer_id: 'bot',
         body: shouldDisplayAwayMessage ? awayMessage : greeting,
         created_at: new Date().toISOString(), // TODO: what should this be?
-        seen_at: new Date().toISOString(),
+        ...overrides,
       },
     ];
   };
@@ -428,10 +453,18 @@ class ChatWindow extends React.Component<Props, State> {
         (a: Message, b: Message) =>
           +new Date(a.created_at) - +new Date(b.created_at)
       );
+      const [initialMessage] = formattedMessages;
+      const initialMessageCreatedAt = initialMessage?.created_at;
 
       this.setState({
         conversationId,
-        messages: [...this.getDefaultGreeting(), ...formattedMessages],
+        messages: [
+          ...this.getDefaultGreeting({
+            created_at: initialMessageCreatedAt,
+            seen_at: initialMessageCreatedAt,
+          }),
+          ...formattedMessages,
+        ],
       });
 
       this.joinConversationChannel(conversationId, customerId);
@@ -620,7 +653,7 @@ class ChatWindow extends React.Component<Props, State> {
   shouldMarkAsSeen = (message: Message) => {
     const {isOpen} = this.state;
     const {user_id: agentId, seen_at: seenAt} = message;
-    const isAgentMessage = !!agentId;
+    const isAgentMessage = !!agentId || message.type === 'bot';
 
     // If already seen or the page is not visible, don't mark as seen
     if (seenAt || isWindowHidden(document)) {
@@ -633,19 +666,17 @@ class ChatWindow extends React.Component<Props, State> {
   markMessagesAsSeen = () => {
     const {customerId, conversationId, messages = []} = this.state;
 
-    if (!this.channel || !customerId || !conversationId) {
-      return;
-    }
-
     this.logger.debug('Marking messages as seen!');
-
-    this.channel.push('messages:seen', {});
     this.emit('messages:seen', {});
     this.setState({
       messages: messages.map((msg) => {
         return msg.seen_at ? msg : {...msg, seen_at: new Date().toISOString()};
       }),
     });
+
+    if (this.channel && customerId && conversationId) {
+      this.channel.push('messages:seen', {});
+    }
   };
 
   handleSendMessage = async (message: Partial<Message>, email?: string) => {
@@ -812,20 +843,24 @@ class ChatWindow extends React.Component<Props, State> {
     );
   }
 
-  // TODO: make it possible to disable this feature?
-  renderUnreadMessages() {
+  getUnreadMessages = () => {
     const MAX_CHARS = 140;
+    const {customerId, popUpInitialMessage, messages = []} = this.state;
+    const [initialMessage] = messages;
+    const hasOnlyBotMessage =
+      messages.length === 1 &&
+      initialMessage.type === 'bot' &&
+      !initialMessage.seen_at;
 
-    const {
-      newMessagesNotificationText = 'View new messages',
-      isMobile = false,
-    } = this.props;
-    const {customerId, messages = []} = this.state;
-    const unread = messages
+    if (popUpInitialMessage && hasOnlyBotMessage) {
+      return messages;
+    }
+
+    return messages
       .filter((msg) => {
-        const {seen_at: seen} = msg;
+        const {seen_at: seen, type: messageType} = msg;
 
-        if (seen) {
+        if (seen || messageType === 'bot') {
           return false;
         }
 
@@ -841,6 +876,15 @@ class ChatWindow extends React.Component<Props, State> {
 
         return {...msg, body: shorten(body, MAX_CHARS)};
       });
+  };
+
+  // TODO: make it possible to disable this feature?
+  renderUnreadMessages() {
+    const {
+      newMessagesNotificationText = 'View new messages',
+      isMobile = false,
+    } = this.props;
+    const unread = this.getUnreadMessages();
 
     if (unread.length === 0) {
       return null;
