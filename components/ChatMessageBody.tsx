@@ -25,11 +25,15 @@ export const allowedNodeTypes: any[] = [
   'heading',
   'inlineCode',
   'code',
+  'image',
 ];
 
 const renderers = {
   text: (props: any) => {
     return <Twemoji text={props.children} />;
+  },
+  image: (props: any) => {
+    return <img {...props} style={{maxWidth: '100%', maxHeight: 400}} />;
   },
 };
 
