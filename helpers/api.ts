@@ -9,7 +9,7 @@ export const createNewCustomer = async (
   accountId: string,
   metadata: CustomerMetadata = EMPTY_METADATA,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .post(`${baseUrl}/api/customers`)
     .send({
@@ -28,7 +28,7 @@ export const isValidCustomer = async (
   customerId: string,
   accountId: string,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .get(`${baseUrl}/api/customers/${customerId}/exists`)
     .query({
@@ -41,7 +41,7 @@ export const updateCustomerMetadata = async (
   customerId: string,
   metadata: CustomerMetadata = EMPTY_METADATA,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .put(`${baseUrl}/api/customers/${customerId}/metadata`)
     .send({
@@ -54,7 +54,7 @@ export const createNewConversation = async (
   accountId: string,
   customerId: string,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .post(`${baseUrl}/api/conversations`)
     .send({
@@ -71,7 +71,7 @@ export const findCustomerByExternalId = async (
   accountId: string,
   filters: Record<string, any>,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .get(`${baseUrl}/api/customers/identify`)
     .query({...filters, external_id: externalId, account_id: accountId})
@@ -82,7 +82,7 @@ export const fetchCustomerConversations = async (
   customerId: string,
   accountId: string,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .get(`${baseUrl}/api/conversations/customer`)
     .query({customer_id: customerId, account_id: accountId})
@@ -101,9 +101,9 @@ export const fetchWidgetSettings = async (
 
 export const upload = async (
   accountId: string,
-  file: any,
+  file: File,
   baseUrl = DEFAULT_BASE_URL
-) => {
+): Promise<any> => {
   return request
     .post(`${baseUrl}/api/upload`)
     .send({

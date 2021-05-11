@@ -2,7 +2,6 @@ import React from 'react';
 import {ThemeProvider} from 'theme-ui';
 import ChatWindow from './ChatWindow';
 import {CustomerMetadata} from '../helpers/types';
-import {isDev} from '../helpers/config';
 import {setupPostMessageHandlers} from '../helpers/utils';
 import getThemeConfig from '../helpers/theme';
 import Logger from '../helpers/logger';
@@ -104,7 +103,7 @@ class Wrapper extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     const debugModeEnabled = !!Number(this.props.config.debug);
 
     this.logger = new Logger(debugModeEnabled);
@@ -114,11 +113,11 @@ class Wrapper extends React.Component<Props, State> {
     );
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.unsubscribe && this.unsubscribe();
   }
 
-  postMessageHandlers = (msg: any) => {
+  postMessageHandlers = (msg: MessageEvent): void => {
     this.logger.debug('Handling in wrapper:', msg.data);
     const {event, payload = {}} = msg.data;
 
@@ -130,14 +129,14 @@ class Wrapper extends React.Component<Props, State> {
     }
   };
 
-  handleConfigUpdate = (payload: any) => {
+  handleConfigUpdate = (payload: Record<string, any>): void => {
     const updates = sanitizeConfigPayload(payload);
     this.logger.debug('Updating widget config:', updates);
 
     this.setState({config: {...this.state.config, ...updates}});
   };
 
-  render() {
+  render(): JSX.Element {
     const {config = {}} = this.state;
 
     if (Object.keys(config).length === 0) {

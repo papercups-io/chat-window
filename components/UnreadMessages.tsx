@@ -16,7 +16,7 @@ const UnreadMessages = ({
   newMessagesNotificationText,
   isMobile,
   onOpen,
-}: Props) => {
+}: Props): JSX.Element => {
   if (messages.length === 0) {
     return null;
   }

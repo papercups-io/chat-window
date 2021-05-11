@@ -1,8 +1,9 @@
+import {Theme} from 'theme-ui';
 import tinycolor from 'tinycolor2';
 
 type ThemeSettings = {primary?: string};
 
-export const getThemeConfig = (settings: ThemeSettings) => {
+export const getThemeConfig = (settings: ThemeSettings): Theme => {
   const {primary = '#1890ff'} = settings;
   const base = tinycolor(primary);
   const overrides = {
@@ -12,11 +13,9 @@ export const getThemeConfig = (settings: ThemeSettings) => {
   };
 
   return {
-    useBodyStyles: false,
     space: [0, 4, 8, 16, 32, 64, 128, 256, 512],
     fonts: {
-      body:
-        '-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;',
+      body: '-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;',
       heading:
         '-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;',
       monospace: '"Roboto Mono", monospace',
@@ -116,6 +115,7 @@ export const getThemeConfig = (settings: ThemeSettings) => {
         lineHeight: 'body',
         fontWeight: 'body',
         fontSize: 1,
+        backgroundColor: 'transparent',
       },
       h1: {
         color: 'text',

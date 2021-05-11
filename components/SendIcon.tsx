@@ -1,5 +1,4 @@
-/** @jsx jsx */
-import {jsx} from 'theme-ui';
+/** @jsxImportSource theme-ui */
 
 export const SendIcon = ({
   width,
@@ -11,7 +10,7 @@ export const SendIcon = ({
   height?: number;
   fill?: string;
   className?: string;
-}) => {
+}): JSX.Element => {
   return (
     <svg
       focusable="false"

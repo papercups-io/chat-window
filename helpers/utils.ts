@@ -1,5 +1,5 @@
 // TODO: handle this on the server instead
-export function now() {
+export function now(): Date {
   const date = new Date();
 
   return new Date(
@@ -12,13 +12,17 @@ export function now() {
   );
 }
 
-export function sleep(ms: number) {
+export function sleep(ms: number): Promise<NodeJS.Timeout> {
   return new Promise((res) => setTimeout(res, ms));
 }
 
 // Returns the words (or whatever substrings based on the `separator`)
 // in a string up until the point of meeting the`max` character limit
-export function shorten(str: string | null, max: number, separator = ' ') {
+export function shorten(
+  str: string | null,
+  max: number,
+  separator = ' '
+): string {
   if (!str) {
     return '';
   } else if (str.length <= max) {
@@ -28,7 +32,7 @@ export function shorten(str: string | null, max: number, separator = ' ') {
   return str.substr(0, str.lastIndexOf(separator, max)).concat('...');
 }
 
-export function shouldActivateGameMode(message: string) {
+export function shouldActivateGameMode(message: string): boolean {
   if (!message || !message.length) {
     return false;
   }
@@ -74,7 +78,11 @@ export function throttle<T extends []>(
   };
 }
 
-export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
+export function setupPostMessageHandlers(
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  w: any,
+  handler: (msg: any) => void
+): () => any {
   const cb = (msg: any) => {
     handler(msg);
   };

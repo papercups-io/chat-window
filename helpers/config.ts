@@ -1,6 +1,6 @@
 export const DEFAULT_BASE_URL = 'https://app.papercups.io';
 
-export const isDev = (w: any) => {
+export const isDev = (w: Window): boolean => {
   const hostname = w?.location?.hostname || '';
 
   return Boolean(
@@ -12,7 +12,7 @@ export const isDev = (w: any) => {
   );
 };
 
-export const getWebsocketUrl = (baseUrl) => {
+export const getWebsocketUrl = (baseUrl: string): string => {
   // TODO: handle this parsing better
   const url = baseUrl || DEFAULT_BASE_URL;
   const [protocol, host] = url.split('://');

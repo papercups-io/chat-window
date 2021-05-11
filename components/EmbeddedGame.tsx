@@ -8,7 +8,11 @@ type Props = {
   onLeaveGame: () => void;
 };
 
-const EmbeddedGame = ({isMobile, onLoadGame, onLeaveGame}: Props) => {
+const EmbeddedGame = ({
+  isMobile,
+  onLoadGame,
+  onLeaveGame,
+}: Props): JSX.Element => {
   return (
     <Flex
       className={isMobile ? 'Mobile' : ''}

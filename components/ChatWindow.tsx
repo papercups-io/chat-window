@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {SyntheticEvent} from 'react';
 import {Box, Flex, Heading, Text} from 'theme-ui';
 import {Socket, Presence} from 'phoenix';
 import {motion} from 'framer-motion';
@@ -26,7 +26,6 @@ import {
   addVisibilityEventListener,
 } from '../helpers/visibility';
 import analytics from '../helpers/analytics';
-import EmailForm from './EmailForm';
 import EmbeddedGame from './EmbeddedGame';
 import UnreadMessages from './UnreadMessages';
 import QuickReplies from './QuickReplies';
@@ -100,7 +99,7 @@ class ChatWindow extends React.Component<Props, State> {
     };
   }
 
-  async componentDidMount() {
+  async componentDidMount(): Promise<void> {
     const {
       baseUrl,
       accountId,
@@ -149,7 +148,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.channel && this.channel.leave();
     this.subscriptions.forEach((unsubscribe) => {
       if (typeof unsubscribe === 'function') {
@@ -158,21 +157,22 @@ class ChatWindow extends React.Component<Props, State> {
     });
   }
 
-  emit = (event: string, payload?: any) => {
+  emit = (event: string, payload?: Record<string, any>): void => {
     this.logger.debug('Sending event from iframe:', {event, payload});
 
     parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
 
-  postMessageHandlers = (msg: any) => {
+  postMessageHandlers = (msg: MessageEvent): void | Promise<void> => {
     const {event, payload = {}} = msg.data;
     this.logger.debug('Handling in iframe:', msg.data);
 
     switch (event) {
       case 'customer:update':
-        const {customerId, metadata} = payload;
-
-        return this.updateExistingCustomer(customerId, metadata);
+        return this.updateExistingCustomer(
+          payload.customerId,
+          payload.metadata
+        );
       case 'notifications:display':
         return this.handleDisplayNotifications(payload);
       case 'papercups:toggle':
@@ -186,11 +186,9 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  handleDisplayNotifications = (payload: any) => {
-    const {
-      shouldDisplayNotifications = false,
-      popUpInitialMessage = false,
-    } = payload;
+  handleDisplayNotifications = (payload: Record<string, boolean>): void => {
+    const {shouldDisplayNotifications = false, popUpInitialMessage = false} =
+      payload;
 
     return this.setState(
       {
@@ -220,7 +218,7 @@ class ChatWindow extends React.Component<Props, State> {
       .catch(() => empty);
   };
 
-  listenForNewConversations = (customerId: string) => {
+  listenForNewConversations = (customerId: string): void => {
     const {customer: metadata} = this.props;
 
     const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
@@ -245,7 +243,7 @@ class ChatWindow extends React.Component<Props, State> {
       });
   };
 
-  listenForAgentAvailability = () => {
+  listenForAgentAvailability = (): void => {
     const {accountId} = this.props;
     const room = this.socket.channel(`room:${accountId}`, {});
 
@@ -276,14 +274,14 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
-  scrollIntoView = () => {
+  scrollIntoView = (): void => {
     this.scrollToEl && this.scrollToEl.scrollIntoView(false);
   };
 
   // If the page is not visible (i.e. user is looking at another tab),
   // we want to mark messages as read once the chat widget becomes visible
   // again, as long as it's open.
-  handleVisibilityChange = (e?: any) => {
+  handleVisibilityChange = (e?: UIEvent): void => {
     const doc = document || (e && e.target);
 
     if (isWindowHidden(doc)) {
@@ -298,7 +296,7 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  handlePapercupsPlan = (payload: any = {}) => {
+  handlePapercupsPlan = (payload: any = {}): void => {
     this.logger.debug('Handling subscription plan:', payload);
 
     const {settings = {} as WidgetSettings} = this.state;
@@ -310,7 +308,7 @@ class ChatWindow extends React.Component<Props, State> {
     this.setState({shouldDisplayBranding});
   };
 
-  handleToggleDisplay = (payload: any = {}) => {
+  handleToggleDisplay = (payload: any = {}): void => {
     const isOpen = !!payload.isOpen;
 
     this.setState({isOpen, isTransitioning: false}, () => {
@@ -347,17 +345,18 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
-  isValidUuid = (id: string) => {
+  isValidUuid = (id: string): boolean => {
     if (!id || !id.length) {
       return false;
     }
 
-    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const regex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
     return regex.test(id);
   };
 
-  isValidCustomer = async (customerId?: string | null) => {
+  isValidCustomer = async (customerId?: string | null): Promise<boolean> => {
     if (!customerId || !customerId.length) {
       return false;
     }
@@ -401,14 +400,13 @@ class ChatWindow extends React.Component<Props, State> {
     // and host -- this may break across subdomains, but I think this is fine for now.
     const {email, host, external_id: externalId} = metadata;
     const filters = {email, host};
-    const {
-      customer_id: matchingCustomerId,
-    } = await API.findCustomerByExternalId(
-      externalId,
-      accountId,
-      filters,
-      baseUrl
-    );
+    const {customer_id: matchingCustomerId} =
+      await API.findCustomerByExternalId(
+        externalId,
+        accountId,
+        filters,
+        baseUrl
+      );
 
     if (!matchingCustomerId) {
       this.setState({customerId: null});
@@ -433,7 +431,7 @@ class ChatWindow extends React.Component<Props, State> {
   fetchLatestConversation = async (
     cachedCustomerId?: string | null,
     metadata?: CustomerMetadata
-  ) => {
+  ): Promise<void> => {
     const customerId = await this.checkForExistingCustomer(
       metadata,
       cachedCustomerId
@@ -557,7 +555,7 @@ class ChatWindow extends React.Component<Props, State> {
   updateExistingCustomer = async (
     customerId: string,
     metadata?: CustomerMetadata
-  ) => {
+  ): Promise<void> => {
     if (!metadata) {
       return;
     }
@@ -574,7 +572,7 @@ class ChatWindow extends React.Component<Props, State> {
   initializeNewConversation = async (
     existingCustomerId?: string,
     email?: string
-  ) => {
+  ): Promise<{customerId: string; conversationId: string}> => {
     const {accountId, baseUrl} = this.props;
     const customerId = await this.createOrUpdateCustomer(
       accountId,
@@ -593,7 +591,10 @@ class ChatWindow extends React.Component<Props, State> {
     return {customerId, conversationId};
   };
 
-  joinConversationChannel = (conversationId: string, customerId?: string) => {
+  joinConversationChannel = (
+    conversationId: string,
+    customerId?: string
+  ): void => {
     if (this.channel && this.channel.leave) {
       this.channel.leave(); // TODO: what's the best practice here?
     }
@@ -629,26 +630,26 @@ class ChatWindow extends React.Component<Props, State> {
     );
   };
 
-  areDatesEqual = (x: string, y: string) => {
+  areDatesEqual = (x: string, y: string): boolean => {
     return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
   };
 
-  emitUnseenMessage = (message: Message) => {
+  emitUnseenMessage = (message: Message): void => {
     this.emit('messages:unseen', {message});
   };
 
-  emitOpenWindow = (e: any) => {
+  emitOpenWindow = (): void => {
     this.emit('papercups:open', {});
     // This is the state where we are waiting for parent window to reply,
     // letting us know when the transition from closed to open is over
     this.setState({isTransitioning: true});
   };
 
-  emitCloseWindow = (e: any) => {
+  emitCloseWindow = (): void => {
     this.emit('papercups:close', {});
   };
 
-  handleNewMessage = (message: Message) => {
+  handleNewMessage = (message: Message): void => {
     this.emit('message:received', message);
 
     const {messages = []} = this.state;
@@ -676,7 +677,7 @@ class ChatWindow extends React.Component<Props, State> {
     });
   };
 
-  shouldMarkAsSeen = (message: Message) => {
+  shouldMarkAsSeen = (message: Message): boolean => {
     const {isOpen} = this.state;
     const {user_id: agentId, seen_at: seenAt} = message;
     const isAgentMessage = !!agentId || message.type === 'bot';
@@ -689,7 +690,7 @@ class ChatWindow extends React.Component<Props, State> {
     return isAgentMessage && isOpen;
   };
 
-  markMessagesAsSeen = () => {
+  markMessagesAsSeen = (): void => {
     const {customerId, conversationId, messages = []} = this.state;
 
     this.logger.debug('Marking messages as seen!');
@@ -705,7 +706,10 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  handleSendMessage = async (message: Partial<Message>, email?: string) => {
+  handleSendMessage = async (
+    message: Partial<Message>,
+    email?: string
+  ): Promise<void> => {
     const {customerId, conversationId, isSending} = this.state;
     const {body, file_ids = []} = message;
     const isMissingBody = !body || body.trim().length === 0;
@@ -769,7 +773,7 @@ class ChatWindow extends React.Component<Props, State> {
 
   // If this is true, we don't allow the customer to send any messages
   // until they enter an email address in the chat widget.
-  askForEmailUpfront = () => {
+  askForEmailUpfront = (): boolean => {
     const {customer, shouldRequireEmail} = this.props;
     const {customerId, messages = []} = this.state;
 
@@ -789,7 +793,7 @@ class ChatWindow extends React.Component<Props, State> {
     return !previouslySentMessages;
   };
 
-  playNotificationSound = async (volume = 0.2) => {
+  playNotificationSound = async (volume = 0.2): Promise<void> => {
     try {
       const file = '/alert.mp3';
       const audio = new Audio(file);
@@ -801,13 +805,13 @@ class ChatWindow extends React.Component<Props, State> {
     }
   };
 
-  handleGameLoaded = (e: any) => {
+  handleGameLoaded = (e: SyntheticEvent<HTMLIFrameElement>): void => {
     if (e.currentTarget && e.currentTarget.focus) {
       e.currentTarget.focus();
     }
   };
 
-  handleLeaveGameMode = () => {
+  handleLeaveGameMode = (): void => {
     this.setState({isGameMode: false}, () => this.scrollIntoView());
   };
 
@@ -822,7 +826,7 @@ class ChatWindow extends React.Component<Props, State> {
     return version < '1.1.2';
   };
 
-  handleSelectQuickReply = ({text, action}: QuickReply) => {
+  handleSelectQuickReply = ({text, action}: QuickReply): void => {
     this.handleSendMessage({
       body: text,
       metadata: {
@@ -853,7 +857,7 @@ class ChatWindow extends React.Component<Props, State> {
     );
   };
 
-  getUnreadMessages = () => {
+  getUnreadMessages = (): Message[] => {
     const MAX_CHARS = 140;
     const {customerId, popUpInitialMessage, messages = []} = this.state;
     const [initialMessage] = messages;
@@ -888,7 +892,7 @@ class ChatWindow extends React.Component<Props, State> {
       });
   };
 
-  render() {
+  render(): JSX.Element {
     const {
       title = 'Welcome!',
       subtitle = 'How can we help you?',

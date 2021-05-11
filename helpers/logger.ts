@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 class Logger {
   debugModeEnabled: boolean;
 
@@ -5,7 +6,7 @@ class Logger {
     this.debugModeEnabled = !!debugModeEnabled;
   }
 
-  debug(...args: any) {
+  debug(...args: any): void {
     if (!this.debugModeEnabled) {
       return;
     }
@@ -13,7 +14,7 @@ class Logger {
     console.debug('[Papercups iframe]', ...args);
   }
 
-  log(...args: any) {
+  log(...args: any): void {
     if (!this.debugModeEnabled) {
       return;
     }
@@ -21,15 +22,15 @@ class Logger {
     console.log('[Papercups iframe]', ...args);
   }
 
-  info(...args: any) {
+  info(...args: any): void {
     console.info('[Papercups iframe]', ...args);
   }
 
-  warn(...args: any) {
+  warn(...args: any): void {
     console.warn('[Papercups iframe]', ...args);
   }
 
-  error(...args: any) {
+  error(...args: any): void {
     console.error('[Papercups iframe]', ...args);
   }
 }

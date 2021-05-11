@@ -1,7 +1,7 @@
 import React from 'react';
 import {Flex, Link} from 'theme-ui';
 
-const PapercupsBranding = () => {
+const PapercupsBranding = (): JSX.Element => {
   return (
     <Flex m={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
       <Link

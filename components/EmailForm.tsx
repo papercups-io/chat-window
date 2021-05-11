@@ -16,7 +16,7 @@ const EmailForm = ({
   emailInputPlaceholder,
   isSending,
   onSendMessage,
-}: Props) => {
+}: Props): JSX.Element => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
 

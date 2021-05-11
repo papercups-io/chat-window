@@ -6,13 +6,10 @@
     "build": "next build",
     "export": "next export",
     "deploy": "npm run build && npm run export",
-    "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "start": "next start -p 8080"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "start": "next start -p 8080",
+    "format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "lint": "eslint . --ext ts --ext tsx --ext js",
+    "prepare": "husky install"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
@@ -21,33 +18,38 @@
   },
   "dependencies": {
     "@sentry/react": "^6.5.1",
-    "antd": "^4.4.2",
-    "dayjs": "^1.10.6",
-    "framer-motion": "^2.3.0",
-    "next": "9.4.4",
-    "phoenix": "^1.5.4",
-    "rc-upload": "^3.3.4",
-    "react": "16.13.1",
-    "react-dom": "16.13.1",
-    "react-emoji-render": "^1.2.4",
-    "react-markdown": "^4.3.1",
-    "remark-breaks": "^2.0.0",
-    "superagent": "^5.3.1",
-    "theme-ui": "^0.3.1",
-    "tinycolor2": "^1.4.1",
+    "antd": "^4.16.0",
+    "dayjs": "^1.10.4",
+    "framer-motion": "^4.1.17",
+    "next": "^11.0.1",
+    "phoenix": "^1.5.9",
+    "rc-upload": "^4.3.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-markdown": "^6.0.2",
+    "remark-breaks": "^2.0.2",
+    "remark-emoji": "^2.2.0",
+    "superagent": "^6.1.0",
+    "theme-ui": "^0.10.0",
+    "tinycolor2": "^1.4.2",
     "use-composed-ref": "^1.1.0",
     "use-latest": "^1.2.0"
   },
   "devDependencies": {
-    "@types/node": "^14.0.23",
-    "@types/phoenix": "^1.5.0",
-    "@types/react": "^16.9.43",
-    "@types/superagent": "^4.1.8",
-    "@types/theme-ui": "^0.3.6",
+    "@types/node": "^16.4.5",
+    "@types/phoenix": "^1.5.1",
+    "@types/react": "^17.0.8",
+    "@types/superagent": "^4.1.11",
     "@types/tinycolor2": "^1.4.2",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.2.11",
-    "prettier": "^2.0.5",
-    "typescript": "^3.9.7"
+    "@typescript-eslint/eslint-plugin": "^4.25.0",
+    "@typescript-eslint/parser": "^4.25.0",
+    "eslint": "^7.27.0",
+    "eslint-config-next": "^11.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "husky": "^7.0.1",
+    "lint-staged": "^11.0.0",
+    "prettier": "^2.3.0",
+    "typescript": "^4.2.4"
   }
 }

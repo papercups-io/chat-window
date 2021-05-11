@@ -1,6 +1,3 @@
-/** @jsx jsx */
-import {jsx} from 'theme-ui';
-
 const CloseIcon = ({
   width,
   height,
@@ -11,7 +8,7 @@ const CloseIcon = ({
   height?: number;
   className?: string;
   onClick?: (e: any) => void;
-}) => {
+}): JSX.Element => {
   return (
     <svg
       height={height || 27}

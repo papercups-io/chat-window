@@ -1,5 +1,4 @@
-/** @jsx jsx */
-import {jsx} from 'theme-ui';
+/** @jsxImportSource theme-ui */
 
 export const BotIcon = ({
   width,
@@ -11,7 +10,7 @@ export const BotIcon = ({
   height?: number;
   fill?: string;
   className?: string;
-}) => {
+}): JSX.Element => {
   return (
     <svg
       viewBox="64 64 896 896"

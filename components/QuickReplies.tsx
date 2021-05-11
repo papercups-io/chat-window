@@ -8,7 +8,7 @@ type Props = {
   onSelect: (reply: QuickReply) => void;
 };
 
-const QuickReplies = ({replies, onSelect}: Props) => {
+const QuickReplies = ({replies, onSelect}: Props): JSX.Element => {
   if (!replies || !replies.length) {
     return null;
   }
