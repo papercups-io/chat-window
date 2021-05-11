@@ -17,12 +17,8 @@
     ]
   },
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.23.0",
-    "@typescript-eslint/parser": "^4.23.0",
     "antd": "^4.15.5",
     "dayjs": "^1.10.4",
-    "eslint": "^7.26.0",
-    "eslint-plugin-react": "^7.23.2",
     "framer-motion": "^4.1.15",
     "next": "^10.2.0",
     "phoenix": "^1.5.9",
@@ -44,6 +40,10 @@
     "@types/react": "^17.0.5",
     "@types/superagent": "^4.1.11",
     "@types/tinycolor2": "^1.4.2",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "eslint": "^7.26.0",
+    "eslint-plugin-react": "^7.23.2",
     "husky": "^6.0.0",
     "lint-staged": "^11.0.0",
     "prettier": "^2.3.0",
