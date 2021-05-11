@@ -12,7 +12,7 @@ export const BotIcon = ({
   height?: number;
   fill?: string;
   className?: string;
-}) => {
+}): JSX.Element => {
   return (
     <svg
       viewBox="64 64 896 896"

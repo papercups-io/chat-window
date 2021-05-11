@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
-import {Box, Image} from 'theme-ui';
+import {Box, Image, ThemeUICSSObject} from 'theme-ui';
 import emoji from 'remark-emoji';
 import {Attachment} from '../helpers/types';
 
@@ -55,7 +55,7 @@ const ChatMessageAttachment = ({attachment}: {attachment: Attachment}) => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        {isImageFile && false ? (
+        {isImageFile ? (
           <Box>
             <Image alt={filename} src={fileUrl} />
           </Box>
@@ -70,7 +70,7 @@ const ChatMessageAttachment = ({attachment}: {attachment: Attachment}) => {
 type ChatMessageBodyProps = {
   className?: string;
   content: string;
-  sx?: object;
+  sx?: ThemeUICSSObject;
   attachments?: Array<Attachment>;
 };
 
@@ -79,7 +79,7 @@ const ChatMessageBody = ({
   content,
   sx,
   attachments = [],
-}: ChatMessageBodyProps) => {
+}: ChatMessageBodyProps): JSX.Element => {
   const parsedSx = Object.assign(
     {
       px: '14px',
@@ -102,11 +102,12 @@ const ChatMessageBody = ({
     <Box sx={parsedSx}>
       <ReactMarkdown
         className={`Text--markdown ${className || ''}`}
-        children={content}
         allowedElements={allowedElements}
         components={renderers}
         remarkPlugins={[breaks, [emoji, {emoticon: true}]]}
-      />
+      >
+        {content}
+      </ReactMarkdown>
       {attachments && attachments.length > 0 && (
         <Box mt={2} className={`Text--markdown ${className || ''}`}>
           {attachments.map((attachment) => {

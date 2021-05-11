@@ -12,7 +12,7 @@ export const SendIcon = ({
   height?: number;
   fill?: string;
   className?: string;
-}) => {
+}): JSX.Element => {
   return (
     <svg
       focusable="false"

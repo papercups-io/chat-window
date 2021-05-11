@@ -42,7 +42,7 @@ export default function calculateNodeHeight(
 
   Object.keys(sizingStyle).forEach((_key) => {
     const key = _key as keyof typeof sizingStyle;
-    hiddenTextarea!.style[key] = sizingStyle[key] as any;
+    hiddenTextarea.style[key] = sizingStyle[key] as any;
   });
 
   forceHiddenStyles(hiddenTextarea);

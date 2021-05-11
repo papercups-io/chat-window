@@ -9,7 +9,7 @@ const AgentAvailability = ({
   hasAvailableAgents: boolean;
   agentAvailableText: string;
   agentUnavailableText: string;
-}) => {
+}): JSX.Element => {
   return (
     <Flex
       px={20}

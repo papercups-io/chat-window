@@ -65,7 +65,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<
   const measurementsCacheRef = React.useRef<SizingData>();
 
   const resizeTextarea = () => {
-    const node = libRef.current!;
+    const node = libRef.current;
     const nodeSizingData =
       cacheMeasurements && measurementsCacheRef.current
         ? measurementsCacheRef.current

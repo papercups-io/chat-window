@@ -104,7 +104,7 @@ const ChatMessage = ({
   companyName,
   isLastInGroup,
   shouldDisplayTimestamp,
-}: Props) => {
+}: Props): JSX.Element => {
   const {body, created_at, user, type, attachments = []} = message;
   const created = created_at ? dayjs.utc(created_at) : null;
   const timestamp = created ? formatRelativeTime(created) : null;
@@ -164,7 +164,7 @@ const ChatMessage = ({
   );
 };
 
-export const PopupChatMessage = ({message}: Props) => {
+export const PopupChatMessage = ({message}: Props): JSX.Element => {
   const {body, user, type} = message;
   const isBot = type === 'bot';
   const identifer = isBot ? 'Bot' : getAgentIdentifier(user);
