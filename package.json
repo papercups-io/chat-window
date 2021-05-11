@@ -6,8 +6,9 @@
     "build": "next build",
     "export": "next export",
     "deploy": "npm run build && npm run export",
-    "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "start": "next start -p 8080",
+    "format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "lint": "eslint . --ext ts --ext tsx --ext js",
     "prepare": "husky install"
   },
   "lint-staged": {
@@ -16,8 +17,12 @@
     ]
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
     "antd": "^4.4.2",
     "dayjs": "^1.10.4",
+    "eslint": "^7.26.0",
+    "eslint-plugin-react": "^7.23.2",
     "framer-motion": "^4.1.14",
     "next": "^10.2.0",
     "phoenix": "^1.5.4",
