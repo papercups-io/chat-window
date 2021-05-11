@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import {Textarea} from 'theme-ui';
+import {Textarea, ThemeUICSSObject} from 'theme-ui';
 import calculateNodeHeight from './calculateNodeHeight';
 import getSizingData, {SizingData} from './getSizingData';
 import {useComposedRef, useWindowResizeListener} from './hooks';
@@ -29,6 +29,7 @@ export type TextareaAutosizeProps = Omit<TextareaProps, 'style'> & {
   onHeightChange?: (height: number, meta: TextareaHeightChangeMeta) => void;
   cacheMeasurements?: boolean;
   style?: Style;
+  sx?: ThemeUICSSObject;
 };
 
 const TextareaAutosize: React.ForwardRefRenderFunction<
