@@ -49,6 +49,10 @@ body {
   text-decoration: underline;
 }
 
+.Text--markdown pre {
+  white-space: pre-wrap;
+}
+
 .Text--white {
   color: #fff;
 }
