@@ -42,6 +42,7 @@ body {
 
 .Text--markdown {
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .Text--markdown a {
