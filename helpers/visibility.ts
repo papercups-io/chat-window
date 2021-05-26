@@ -1,4 +1,6 @@
-export const getBrowserVisibilityInfo = (document: any) => {
+export const getBrowserVisibilityInfo = (
+  document: Document | any
+): {hidden: string; event: string; state: string} => {
   if (typeof document.hidden !== 'undefined') {
     return {
       hidden: 'hidden',
@@ -32,16 +34,16 @@ export const getBrowserVisibilityInfo = (document: any) => {
   }
 };
 
-export const isWindowHidden = (document: any): boolean => {
+export const isWindowHidden = (document: Document | EventTarget): boolean => {
   const {hidden} = getBrowserVisibilityInfo(document);
 
   return !!document[hidden];
 };
 
 export const addVisibilityEventListener = (
-  document: any,
-  handler: (e: any) => void
-) => {
+  document: Document,
+  handler: EventListener
+): (() => void) => {
   const {event} = getBrowserVisibilityInfo(document);
 
   document.addEventListener(event, handler, false);

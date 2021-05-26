@@ -50,7 +50,7 @@ const getSizingData = (node: HTMLElement): SizingData | null => {
     return null;
   }
 
-  const sizingStyle = pick((SIZING_STYLE as unknown) as SizingProps[], style);
+  const sizingStyle = pick(SIZING_STYLE as unknown as SizingProps[], style);
   const {boxSizing} = sizingStyle;
 
   // probably node is detached from DOM, can't read computed dimensions
@@ -62,21 +62,20 @@ const getSizingData = (node: HTMLElement): SizingData | null => {
   // so we need to add manually padding and border widths
   if (isIE && boxSizing === 'border-box') {
     sizingStyle.width =
-      parseFloat(sizingStyle.width!) +
-      parseFloat(sizingStyle.borderRightWidth!) +
-      parseFloat(sizingStyle.borderLeftWidth!) +
-      parseFloat(sizingStyle.paddingRight!) +
-      parseFloat(sizingStyle.paddingLeft!) +
+      parseFloat(sizingStyle.width) +
+      parseFloat(sizingStyle.borderRightWidth) +
+      parseFloat(sizingStyle.borderLeftWidth) +
+      parseFloat(sizingStyle.paddingRight) +
+      parseFloat(sizingStyle.paddingLeft) +
       'px';
   }
 
   const paddingSize =
-    parseFloat(sizingStyle.paddingBottom!) +
-    parseFloat(sizingStyle.paddingTop!);
+    parseFloat(sizingStyle.paddingBottom) + parseFloat(sizingStyle.paddingTop);
 
   const borderSize =
-    parseFloat(sizingStyle.borderBottomWidth!) +
-    parseFloat(sizingStyle.borderTopWidth!);
+    parseFloat(sizingStyle.borderBottomWidth) +
+    parseFloat(sizingStyle.borderTopWidth);
 
   return {
     sizingStyle,

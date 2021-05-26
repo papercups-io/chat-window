@@ -98,7 +98,7 @@ class Wrapper extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // TODO: make it possible to opt into debug mode
     const debugModeEnabled = isDev(window);
 
@@ -109,11 +109,11 @@ class Wrapper extends React.Component<Props, State> {
     );
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.unsubscribe && this.unsubscribe();
   }
 
-  postMessageHandlers = (msg: any) => {
+  postMessageHandlers = (msg: MessageEvent): void => {
     this.logger.debug('Handling in wrapper:', msg.data);
     const {event, payload = {}} = msg.data;
 
@@ -125,14 +125,14 @@ class Wrapper extends React.Component<Props, State> {
     }
   };
 
-  handleConfigUpdate = (payload: any) => {
+  handleConfigUpdate = (payload: Record<string, any>): void => {
     const updates = sanitizeConfigPayload(payload);
     this.logger.debug('Updating widget config:', updates);
 
     this.setState({config: {...this.state.config, ...updates}});
   };
 
-  render() {
+  render(): JSX.Element {
     const {config = {}} = this.state;
 
     if (Object.keys(config).length === 0) {

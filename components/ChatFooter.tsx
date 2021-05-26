@@ -22,7 +22,7 @@ const ChatFooter = ({
   accountId: string;
   baseUrl?: string;
   onSendMessage: (message: Partial<Message>, email?: string) => Promise<void>;
-}) => {
+}): JSX.Element => {
   const [message, setMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [isUploading, setIsUploading] = React.useState(false);
