@@ -20,8 +20,9 @@
     ]
   },
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.0.6",
+    "@papercups-io/browser": "0.0.1",
     "antd": "^4.4.2",
+    "dayjs": "^1.10.5",
     "framer-motion": "^2.3.0",
     "next": "9.4.4",
     "phoenix": "^1.5.4",
