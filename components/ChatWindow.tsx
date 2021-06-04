@@ -12,6 +12,7 @@ import {
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
+  throttle,
 } from '../helpers/utils';
 import {Message, CustomerMetadata, WidgetSettings} from '../helpers/types';
 import {isDev, getWebsocketUrl} from '../helpers/config';
@@ -20,6 +21,9 @@ import {
   isWindowHidden,
   addVisibilityEventListener,
 } from '../helpers/visibility';
+import analytics from '../helpers/analytics';
+
+const TEN_MINUTES = 10 * 60 * 1000;
 
 type Props = {
   accountId: string;
@@ -89,6 +93,8 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
+    analytics.init();
+
     const {
       baseUrl,
       customerId: cachedCustomerId,
@@ -115,6 +121,17 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
+    this.socket.onOpen(() => analytics.capture('socket:opened', this.state));
+    this.socket.onClose(
+      throttle(
+        () => analytics.capture('socket:closed', this.state),
+        TEN_MINUTES
+      )
+    );
+    this.socket.onError(
+      throttle(() => analytics.capture('socket:error', this.state), TEN_MINUTES)
+    );
+
     this.listenForAgentAvailability();
 
     await this.fetchLatestConversation(customerId, metadata);
@@ -138,6 +155,7 @@ class ChatWindow extends React.Component<Props, State> {
 
   emit = (event: string, payload?: any) => {
     this.logger.debug('Sending event from iframe:', {event, payload});
+    analytics.capture(`emit:${event}`, payload);
 
     parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
@@ -145,6 +163,7 @@ class ChatWindow extends React.Component<Props, State> {
   postMessageHandlers = (msg: any) => {
     const {event, payload = {}} = msg.data;
     this.logger.debug('Handling in iframe:', msg.data);
+    analytics.capture(`post_message_handler:${event}`, payload);
 
     switch (event) {
       case 'customer:update':

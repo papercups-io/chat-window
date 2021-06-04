@@ -45,6 +45,33 @@ export function shouldActivateGameMode(message: string) {
   );
 }
 
+export function throttle<T extends []>(
+  callback: (..._: T) => void,
+  wait: number,
+  immediate = true
+): (..._: T) => void {
+  let timeout: NodeJS.Timeout | undefined;
+  let initialCall = true;
+
+  return (...args: T) => {
+    const callNow = immediate && initialCall;
+
+    const next = () => {
+      timeout = clearTimeout(timeout) as undefined;
+      callback(...args);
+    };
+
+    if (callNow) {
+      initialCall = false;
+      next();
+    }
+
+    if (timeout === void 0) {
+      timeout = setTimeout(next, wait);
+    }
+  };
+}
+
 export function setupPostMessageHandlers(w: any, handler: (msg: any) => void) {
   const cb = (msg: any) => {
     handler(msg);
