@@ -23,8 +23,6 @@ export const init = () => {
 };
 
 export const capture = (event: string, metadata: Record<any, any> = {}) => {
-  console.debug(`[${event}] -`, metadata);
-
   if (isPostHogEnabled) {
     posthog.capture(event, metadata);
   }
