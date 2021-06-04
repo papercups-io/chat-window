@@ -152,7 +152,6 @@ class ChatWindow extends React.Component<Props, State> {
 
   componentWillUnmount() {
     this.papercups.disconnect();
-    // this.channel && this.channel.leave();
     this.subscriptions.forEach((unsubscribe) => {
       if (typeof unsubscribe === 'function') {
         unsubscribe();
@@ -255,7 +254,6 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   onMessagesUpdated = (messages: Array<Message>) => {
-    console.log('onMessagesUpdated:', messages);
     this.setState({messages}, () => this.scrollIntoView());
 
     const unseenMessages = messages.filter(
@@ -362,8 +360,11 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   handleNewMessage = (message: Message) => {
-    this.emit('message:received', message);
-    // TODO: handle message:sent here as well???
+    if (isAgentMessage(message)) {
+      this.emit('message:received', message);
+    } else {
+      this.emit('message:sent', message);
+    }
 
     if (this.shouldMarkAsSeen(message)) {
       this.markMessagesAsSeen();
