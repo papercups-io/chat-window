@@ -28,7 +28,19 @@ export const capture = (event: string, metadata: Record<any, any> = {}) => {
   }
 };
 
+export const identify = (id: any, email: string) => {
+  if (isSentryEnabled) {
+    Sentry.setUser({id, email});
+  }
+
+  if (isPostHogEnabled) {
+    posthog.identify(id);
+    posthog.people && posthog.people.set({email});
+  }
+};
+
 export default {
   init,
   capture,
+  identify,
 };

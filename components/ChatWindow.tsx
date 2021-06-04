@@ -155,7 +155,6 @@ class ChatWindow extends React.Component<Props, State> {
 
   emit = (event: string, payload?: any) => {
     this.logger.debug('Sending event from iframe:', {event, payload});
-    analytics.capture(`emit:${event}`, payload);
 
     parent.postMessage({event, payload}, '*'); // TODO: remove?
   };
@@ -163,7 +162,6 @@ class ChatWindow extends React.Component<Props, State> {
   postMessageHandlers = (msg: any) => {
     const {event, payload = {}} = msg.data;
     this.logger.debug('Handling in iframe:', msg.data);
-    analytics.capture(`post_message_handler:${event}`, payload);
 
     switch (event) {
       case 'customer:update':
@@ -513,13 +511,15 @@ class ChatWindow extends React.Component<Props, State> {
     const metadata = email ? {...customer, email} : customer;
 
     try {
-      const {id: customerId} = existingCustomerId
+      const customer = existingCustomerId
         ? await API.updateCustomerMetadata(
             existingCustomerId,
             metadata,
             baseUrl
           )
         : await API.createNewCustomer(accountId, metadata, baseUrl);
+      const {id: customerId, email} = customer;
+      analytics.identify(customerId, email);
 
       if (!existingCustomerId) {
         this.emit('customer:created', {customerId});
@@ -533,11 +533,13 @@ class ChatWindow extends React.Component<Props, State> {
       this.logger.error('Failed to update or create customer:', err);
       this.logger.error('Retrying...');
 
-      const {id: customerId} = await API.createNewCustomer(
+      const customer = await API.createNewCustomer(
         accountId,
         metadata,
         baseUrl
       );
+      const {id: customerId, email} = customer;
+      analytics.identify(customerId, email);
 
       this.emit('customer:created', {customerId});
 
