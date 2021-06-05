@@ -121,16 +121,16 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.socket = new Socket(websocketUrl);
     this.socket.connect();
-    this.socket.onOpen(() => analytics.capture('socket:opened', this.state));
-    this.socket.onClose(
-      throttle(
-        () => analytics.capture('socket:closed', this.state),
-        TEN_MINUTES
-      )
-    );
-    this.socket.onError(
-      throttle(() => analytics.capture('socket:error', this.state), TEN_MINUTES)
-    );
+    // this.socket.onOpen(() => analytics.capture('socket:opened', this.state));
+    // this.socket.onClose(
+    //   throttle(
+    //     () => analytics.capture('socket:closed', this.state),
+    //     TEN_MINUTES
+    //   )
+    // );
+    // this.socket.onError(
+    //   throttle(() => analytics.capture('socket:error', this.state), TEN_MINUTES)
+    // );
 
     this.listenForAgentAvailability();
 
