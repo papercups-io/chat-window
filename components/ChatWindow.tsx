@@ -97,6 +97,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     const {
       baseUrl,
+      accountId,
       customerId: cachedCustomerId,
       customer: metadata,
     } = this.props;
@@ -119,7 +120,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     const websocketUrl = getWebsocketUrl(baseUrl);
 
-    this.socket = new Socket(websocketUrl);
+    this.socket = new Socket(websocketUrl, {params: {account_id: accountId}});
     this.socket.connect();
     // this.socket.onOpen(() => analytics.capture('socket:opened', this.state));
     // this.socket.onClose(
