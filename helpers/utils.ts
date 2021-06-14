@@ -18,8 +18,10 @@ export function sleep(ms: number) {
 
 // Returns the words (or whatever substrings based on the `separator`)
 // in a string up until the point of meeting the`max` character limit
-export function shorten(str: string, max: number, separator = ' ') {
-  if (str.length <= max) {
+export function shorten(str: string | null, max: number, separator = ' ') {
+  if (!str) {
+    return '';
+  } else if (str.length <= max) {
     return str;
   }
 
