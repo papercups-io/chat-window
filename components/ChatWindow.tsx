@@ -171,6 +171,9 @@ class ChatWindow extends React.Component<Props, State> {
         return this.updateExistingCustomer(customerId, metadata);
       case 'notifications:display':
         return this.handleDisplayNotifications(payload);
+
+      case 'papercups:send_bot_message':
+        return this.handleBotMessage(payload);
       case 'papercups:toggle':
         return this.handleToggleDisplay(payload);
       case 'papercups:plan':
@@ -619,6 +622,10 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   isCustomerMessage = (message: Message, customerId: string): boolean => {
+    if (message.type === 'bot') {
+      return false;
+    }
+
     return (
       message.customer_id === customerId ||
       (message.sent_at && message.type === 'customer')
@@ -699,6 +706,61 @@ class ChatWindow extends React.Component<Props, State> {
     if (this.channel && customerId && conversationId) {
       this.channel.push('messages:seen', {});
     }
+  };
+
+  handleBotMessage = async (details: any) => {
+    const body = details?.message ?? '';
+    const signature = details?.singature ?? '';
+
+    const {customerId, conversationId, isSending} = this.state;
+
+    if (isSending) {
+      return;
+    }
+
+    const sentAt = new Date().toISOString();
+    // TODO: figure out how this should work if `customerId` is null
+    const payload: Message = {
+      body,
+      customer_id: this.state.customerId,
+      type: 'bot',
+      sent_at: sentAt,
+    };
+
+    this.setState(
+      {
+        messages: [...this.state.messages, payload],
+      },
+      () => this.scrollIntoView()
+    );
+
+    if (!customerId || !conversationId) {
+      await this.initializeNewConversation(customerId);
+    }
+
+    // We should never hit this block, just adding to satisfy TypeScript
+    if (!this.channel) {
+      return;
+    }
+
+    // // TODO: deprecate 'shout' event in favor of 'message:created'
+    this.channel.push('bot:shout', {
+      body,
+      type: 'reply',
+      // customer_id: this.state.customerId,
+      sent_at: sentAt,
+      // user_id: 1,
+      signature,
+    });
+
+    // TODO: should this only be emitted after the message is successfully sent?
+    this.emit('message:sent', {
+      body,
+      type: 'bot',
+      sent_at: sentAt,
+      customer_id: this.state.customerId,
+      conversation_id: this.state.conversationId,
+    });
   };
 
   handleSendMessage = async (message: Partial<Message>, email?: string) => {
