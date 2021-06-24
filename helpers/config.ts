@@ -1,4 +1,4 @@
-export const DEFAULT_BASE_URL = 'https://app.papercups.io';
+export const DEFAULT_BASE_URL = 'https://app.jelibot.com';
 
 export const isDev = (w: any) => {
   const hostname = w?.location?.hostname || '';

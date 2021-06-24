@@ -1103,8 +1103,8 @@ class ChatWindow extends React.Component<Props, State> {
           />
         </Box>
         <img
-          alt="Papercups"
-          src="https://papercups.s3.us-east-2.amazonaws.com/papercups-logo.svg"
+          alt="Jelibot"
+          src="https://www.jelibot.com/img/jelibot-logo.ec6c9c6a.png"
           width="0"
           height="0"
         />

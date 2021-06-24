@@ -20,7 +20,7 @@
     ]
   },
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.0.6",
+    "@ssatai/chat-widget": "^1.1.12",
     "@sentry/react": "^6.5.1",
     "antd": "^4.4.2",
     "framer-motion": "^2.3.0",

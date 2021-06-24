@@ -153,7 +153,7 @@ class Wrapper extends React.Component<Props, State> {
       emailInputPlaceholder = 'Enter your email',
       newMessagesNotificationText = 'View new messages',
       primaryColor = '1890ff',
-      baseUrl = 'https://app.papercups.io',
+      baseUrl = 'https://app.jelibot.com',
       requireEmailUpfront = '0',
       showAgentAvailability = '0',
       closeable = '1',
