@@ -1,13 +1,12 @@
 {
   "name": "chat-window",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "scripts": {
-    "dev": "next dev -p 8080",
+    "dev": "next dev",
     "build": "next build",
     "export": "next export",
-    "deploy": "npm run build && npm run export",
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "start": "next start -p 8080"
+    "start": "next start"
   },
   "husky": {
     "hooks": {
@@ -20,7 +19,7 @@
     ]
   },
   "dependencies": {
-    "@ssatai/chat-widget": "^1.1.12",
+    "@papercups-io/chat-widget": "^1.0.6",
     "@sentry/react": "^6.5.1",
     "antd": "^4.4.2",
     "framer-motion": "^2.3.0",
@@ -40,15 +39,21 @@
     "use-latest": "^1.2.0"
   },
   "devDependencies": {
-    "@types/node": "^14.0.23",
+    "@types/jest": "^26.0.24",
+    "@types/node": "^14.17.5",
     "@types/phoenix": "^1.5.0",
     "@types/react": "^16.9.43",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.6",
     "@types/tinycolor2": "^1.4.2",
     "husky": "^4.2.5",
+    "jest": "^27.0.6",
     "lint-staged": "^10.2.11",
+    "nodemon": "^2.0.10",
     "prettier": "^2.0.5",
-    "typescript": "^3.9.7"
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.3",
+    "ts-node": "^10.0.0",
+    "typescript": "^3.9.10"
   }
 }

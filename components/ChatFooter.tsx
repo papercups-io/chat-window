@@ -6,7 +6,6 @@ import SendIcon from './SendIcon';
 import PaperclipIcon from './PaperclipIcon';
 import {Attachment, Message} from '../helpers/types';
 
-
 const ChatFooter = ({
   placeholder,
   emailInputPlaceholder,

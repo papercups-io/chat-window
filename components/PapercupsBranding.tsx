@@ -5,7 +5,7 @@ const PapercupsBranding = () => {
   return (
     <Flex m={2} sx={{justifyContent: 'center', alignItems: 'center'}}>
       <Link
-        href="https://jelibot.com"
+        href="https://papercups.io?utm_source=papercups&utm_medium=chat&utm_campaign=chat-widget-link"
         target="_blank"
         rel="noopener noreferrer"
         sx={{
@@ -15,7 +15,7 @@ const PapercupsBranding = () => {
           '&:hover': {opacity: 1},
         }}
       >
-        Powered by Jelibot
+        Powered by jelibot
       </Link>
     </Flex>
   );
