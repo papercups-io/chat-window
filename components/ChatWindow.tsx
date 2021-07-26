@@ -12,18 +12,15 @@ import {
   shorten,
   shouldActivateGameMode,
   setupPostMessageHandlers,
-  throttle,
 } from '../helpers/utils';
 import {Message, CustomerMetadata, WidgetSettings} from '../helpers/types';
-import {isDev, getWebsocketUrl} from '../helpers/config';
+import {getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
   isWindowHidden,
   addVisibilityEventListener,
 } from '../helpers/visibility';
 import analytics from '../helpers/analytics';
-
-const TEN_MINUTES = 10 * 60 * 1000;
 
 type Props = {
   accountId: string;
@@ -43,7 +40,9 @@ type Props = {
   agentAvailableText?: string;
   agentUnavailableText?: string;
   showAgentAvailability?: boolean;
+  disableAnalyticsTracking?: boolean;
   isCloseable?: boolean;
+  debug?: boolean;
   version?: string;
 };
 
@@ -93,20 +92,26 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
-    analytics.init();
-
     const {
       baseUrl,
       accountId,
       customerId: cachedCustomerId,
       customer: metadata,
+      debug: debugModeEnabled,
+      disableAnalyticsTracking = false,
     } = this.props;
-    const win = window as any;
-    const doc = (document || win.document) as any;
-    // TODO: make it possible to opt into debug mode
-    const debugModeEnabled = isDev(win);
 
     this.logger = new Logger(debugModeEnabled);
+
+    if (!disableAnalyticsTracking) {
+      this.logger.debug('Initializing analytics...');
+      analytics.init();
+    } else {
+      this.logger.debug('Analytics disabled.');
+    }
+
+    const win = window as any;
+    const doc = (document || win.document) as any;
 
     const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
     const customerId = isValidCustomer ? cachedCustomerId : null;
@@ -122,16 +127,6 @@ class ChatWindow extends React.Component<Props, State> {
 
     this.socket = new Socket(websocketUrl, {params: {account_id: accountId}});
     this.socket.connect();
-    // this.socket.onOpen(() => analytics.capture('socket:opened', this.state));
-    // this.socket.onClose(
-    //   throttle(
-    //     () => analytics.capture('socket:closed', this.state),
-    //     TEN_MINUTES
-    //   )
-    // );
-    // this.socket.onError(
-    //   throttle(() => analytics.capture('socket:error', this.state), TEN_MINUTES)
-    // );
 
     this.listenForAgentAvailability();
 
