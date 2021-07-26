@@ -25,7 +25,9 @@ type Config = {
   showAgentAvailability?: boolean;
   defaultIsOpen?: boolean;
   requireEmailUpfront?: boolean;
+  disableAnalyticsTracking?: boolean;
   closeable?: boolean;
+  debug?: boolean;
   mobile?: boolean;
   metadata?: string; // stringified CustomerMetadata JSON
   version?: string;
@@ -59,7 +61,9 @@ const sanitizeConfigPayload = (payload: any): Config => {
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
+    disableAnalyticsTracking,
     closeable,
+    debug,
     version,
   } = payload;
 
@@ -78,7 +82,9 @@ const sanitizeConfigPayload = (payload: any): Config => {
     agentAvailableText,
     agentUnavailableText,
     showAgentAvailability,
+    disableAnalyticsTracking,
     closeable,
+    debug,
     version,
   };
 };
@@ -99,8 +105,7 @@ class Wrapper extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    // TODO: make it possible to opt into debug mode
-    const debugModeEnabled = isDev(window);
+    const debugModeEnabled = !!Number(this.props.config.debug);
 
     this.logger = new Logger(debugModeEnabled);
     this.unsubscribe = setupPostMessageHandlers(
@@ -156,16 +161,14 @@ class Wrapper extends React.Component<Props, State> {
       baseUrl = 'https://app.papercups.io',
       requireEmailUpfront = '0',
       showAgentAvailability = '0',
+      disableAnalyticsTracking = '0',
       closeable = '1',
+      debug = '0',
       mobile = '0',
       metadata = '{}',
       version = '1.0.0',
     } = config;
 
-    const shouldRequireEmail = !!Number(requireEmailUpfront);
-    const isMobile = !!Number(mobile);
-    const isCloseable = !!Number(closeable);
-    const shouldShowAvailability = !!Number(showAgentAvailability);
     const theme = getThemeConfig({primary: primaryColor});
     const customer = parseCustomerMetadata(metadata);
 
@@ -184,10 +187,12 @@ class Wrapper extends React.Component<Props, State> {
           newMessagesNotificationText={newMessagesNotificationText}
           agentAvailableText={agentAvailableText}
           agentUnavailableText={agentUnavailableText}
-          showAgentAvailability={shouldShowAvailability}
-          shouldRequireEmail={shouldRequireEmail}
-          isMobile={isMobile}
-          isCloseable={isCloseable}
+          showAgentAvailability={!!Number(showAgentAvailability)}
+          shouldRequireEmail={!!Number(requireEmailUpfront)}
+          isMobile={!!Number(mobile)}
+          isCloseable={!!Number(closeable)}
+          debug={!!Number(debug)}
+          disableAnalyticsTracking={!!Number(disableAnalyticsTracking)}
           baseUrl={baseUrl}
           customer={customer}
           version={version}
