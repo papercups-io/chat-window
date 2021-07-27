@@ -49,6 +49,10 @@ body {
   text-decoration: underline;
 }
 
+.Text--markdown p:not(:first-child) {
+  margin-top: 4px;
+}
+
 .Text--markdown pre {
   white-space: pre-wrap;
 }

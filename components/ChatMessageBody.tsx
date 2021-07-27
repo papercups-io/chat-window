@@ -87,9 +87,9 @@ const ChatMessageBody = ({
       py: 2,
       borderRadius: 4,
       maxWidth: '80%',
-      p: {
-        mb: 0,
-      },
+      p: {mb: 0},
+      ul: {my: 2},
+      ol: {my: 2},
       blockquote: {
         px: 2,
         borderLeft: '3px solid',

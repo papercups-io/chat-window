@@ -43,6 +43,8 @@ export type Message = {
   type?: 'bot' | 'agent' | 'customer';
   file_ids?: Array<string>;
   attachments?: Array<Attachment>;
+  quick_replies?: Array<any>;
+  metadata?: any;
 };
 
 export type Attachment = {
@@ -72,4 +74,9 @@ export type WidgetSettings = {
   iframe_url_override?: string;
   icon_variant?: 'outlined' | 'filled';
   account?: Account;
+};
+
+export type QuickReply = {
+  text: string;
+  action: string;
 };
