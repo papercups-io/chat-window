@@ -831,7 +831,12 @@ class ChatWindow extends React.Component<Props, State> {
       return [];
     }
 
-    return message.quick_replies || message.metadata?.quick_replies || [];
+    const replies =
+      message.quick_replies || message.metadata?.quick_replies || [];
+
+    return replies.filter(
+      (reply: any): reply is QuickReply => !!reply.text && !!reply.action
+    );
   };
 
   renderEmbeddedGame() {
