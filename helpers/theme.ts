@@ -75,6 +75,26 @@ export const getThemeConfig = (settings: ThemeSettings) => {
           borderColor: overrides.dark,
         },
       },
+      secondary: {
+        cursor: 'pointer',
+        outline: 0,
+        transition: '0.2s',
+        // background: 'transparent',
+        background: base.lighten(40).toString(),
+        color: overrides.primary,
+        borderColor: overrides.primary,
+        borderWidth: 1,
+        borderStyle: 'solid',
+        '&:hover': {
+          color: '#fff',
+          background: overrides.primary,
+          borderColor: overrides.primary,
+        },
+        '&:active': {
+          background: overrides.dark,
+          borderColor: overrides.dark,
+        },
+      },
       link: {
         cursor: 'pointer',
         outline: 0,

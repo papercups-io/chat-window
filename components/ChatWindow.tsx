@@ -13,7 +13,12 @@ import {
   shouldActivateGameMode,
   setupPostMessageHandlers,
 } from '../helpers/utils';
-import {Message, CustomerMetadata, WidgetSettings} from '../helpers/types';
+import {
+  Message,
+  CustomerMetadata,
+  WidgetSettings,
+  QuickReply,
+} from '../helpers/types';
 import {getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
@@ -813,6 +818,22 @@ class ChatWindow extends React.Component<Props, State> {
     return version < '1.1.2';
   };
 
+  getQuickReplies = (messages: Array<Message>): Array<QuickReply> => {
+    if (!messages || messages.length === 0) {
+      return [];
+    }
+
+    const message = messages[messages.length - 1];
+    const {user_id: agentId} = message;
+    const isAgentMessage = !!agentId || message.type === 'bot';
+
+    if (!isAgentMessage) {
+      return [];
+    }
+
+    return message.quick_replies || message.metadata?.quick_replies || [];
+  };
+
   renderEmbeddedGame() {
     const {isMobile = false} = this.props;
 
@@ -894,6 +915,57 @@ class ChatWindow extends React.Component<Props, State> {
         return {...msg, body: shorten(body, MAX_CHARS)};
       });
   };
+
+  renderQuickReplies() {
+    const {messages = []} = this.state;
+    const replies = this.getQuickReplies(messages);
+
+    if (!replies || !replies.length) {
+      return null;
+    }
+
+    return (
+      <Flex
+        pb={5}
+        sx={{
+          justifyContent: 'flex-end',
+          alignItems: 'flex-end',
+          flexDirection: 'column',
+        }}
+      >
+        {replies.map(({text, action}) => {
+          return (
+            <motion.div
+              key={action}
+              initial={{opacity: 0, x: -2}}
+              animate={{opacity: 1, x: 0}}
+              transition={{duration: 0.2, ease: 'easeIn'}}
+            >
+              <Box key={action} mb={2}>
+                <Button
+                  variant="secondary"
+                  px={2}
+                  py={1}
+                  sx={{maxWidth: 200, textAlign: 'left'}}
+                  onClick={() =>
+                    this.handleSendMessage({
+                      body: text,
+                      metadata: {
+                        // TODO: what should this be called?
+                        reply_action: action,
+                      },
+                    })
+                  }
+                >
+                  {text}
+                </Button>
+              </Box>
+            </motion.div>
+          );
+        })}
+      </Flex>
+    );
+  }
 
   // TODO: make it possible to disable this feature?
   renderUnreadMessages() {
@@ -1071,8 +1143,12 @@ class ChatWindow extends React.Component<Props, State> {
               </motion.div>
             );
           })}
+
+          {this.renderQuickReplies()}
+
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
+
         {shouldDisplayBranding && <PapercupsBranding />}
         <Box
           px={2}
