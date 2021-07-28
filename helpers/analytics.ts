@@ -18,6 +18,7 @@ export const init = () => {
   if (isPostHogEnabled) {
     posthog.init(POSTHOG_TOKEN, {
       api_host: POSTHOG_API_HOST,
+      disable_cookie: true,
     });
   }
 };
