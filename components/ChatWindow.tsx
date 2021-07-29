@@ -1,8 +1,8 @@
 import React from 'react';
-import {Box, Button, Flex, Heading, Text, Link} from 'theme-ui';
+import {Box, Flex, Heading, Text} from 'theme-ui';
 import {Socket, Presence} from 'phoenix';
 import {motion} from 'framer-motion';
-import ChatMessage, {PopupChatMessage} from './ChatMessage';
+import ChatMessage from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import AgentAvailability from './AgentAvailability';
 import PapercupsBranding from './PapercupsBranding';
@@ -26,6 +26,10 @@ import {
   addVisibilityEventListener,
 } from '../helpers/visibility';
 import analytics from '../helpers/analytics';
+import EmailForm from './EmailForm';
+import EmbeddedGame from './EmbeddedGame';
+import UnreadMessages from './UnreadMessages';
+import QuickReplies from './QuickReplies';
 
 type Props = {
   accountId: string;
@@ -818,6 +822,16 @@ class ChatWindow extends React.Component<Props, State> {
     return version < '1.1.2';
   };
 
+  handleSelectQuickReply = ({text, action}: QuickReply) => {
+    this.handleSendMessage({
+      body: text,
+      metadata: {
+        // TODO: what should this be called?
+        reply_action: action,
+      },
+    });
+  };
+
   getQuickReplies = (messages: Array<Message>): Array<QuickReply> => {
     if (!messages || messages.length === 0) {
       return [];
@@ -838,53 +852,6 @@ class ChatWindow extends React.Component<Props, State> {
       (reply: any): reply is QuickReply => !!reply.text && !!reply.action
     );
   };
-
-  renderEmbeddedGame() {
-    const {isMobile = false} = this.props;
-
-    return (
-      <Flex
-        className={isMobile ? 'Mobile' : ''}
-        sx={{
-          bg: 'background',
-          flexDirection: 'column',
-          height: '100%',
-          width: '100%',
-          flex: 1,
-        }}
-      >
-        <motion.iframe
-          src={`https://reichert621.github.io/?v=2`}
-          sandbox="allow-same-origin allow-scripts allow-top-navigation"
-          style={{
-            flex: 1,
-            width: '100%',
-            border: 'none',
-            boxShadow: 'none',
-          }}
-          initial={{opacity: 0, y: 2}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.4, ease: 'easeIn'}}
-          onLoad={this.handleGameLoaded}
-        />
-        <Flex
-          p={3}
-          sx={{
-            justifyContent: 'center',
-            boxShadow: 'inset rgba(35, 47, 53, 0.09) 0px 2px 8px 0px',
-          }}
-        >
-          <Button
-            variant="primary"
-            sx={{width: '100%'}}
-            onClick={this.handleLeaveGameMode}
-          >
-            Back to chat
-          </Button>
-        </Flex>
-      </Flex>
-    );
-  }
 
   getUnreadMessages = () => {
     const MAX_CHARS = 140;
@@ -921,108 +888,6 @@ class ChatWindow extends React.Component<Props, State> {
       });
   };
 
-  renderQuickReplies() {
-    const {messages = []} = this.state;
-    const replies = this.getQuickReplies(messages);
-
-    if (!replies || !replies.length) {
-      return null;
-    }
-
-    return (
-      <Flex
-        pb={5}
-        sx={{
-          justifyContent: 'flex-end',
-          alignItems: 'flex-end',
-          flexDirection: 'column',
-        }}
-      >
-        {replies.map(({text, action}) => {
-          return (
-            <motion.div
-              key={action}
-              initial={{opacity: 0, x: -2}}
-              animate={{opacity: 1, x: 0}}
-              transition={{duration: 0.2, ease: 'easeIn'}}
-            >
-              <Box key={action} mb={2}>
-                <Button
-                  variant="secondary"
-                  px={2}
-                  py={1}
-                  sx={{maxWidth: 200, textAlign: 'left'}}
-                  onClick={() =>
-                    this.handleSendMessage({
-                      body: text,
-                      metadata: {
-                        // TODO: what should this be called?
-                        reply_action: action,
-                      },
-                    })
-                  }
-                >
-                  {text}
-                </Button>
-              </Box>
-            </motion.div>
-          );
-        })}
-      </Flex>
-    );
-  }
-
-  // TODO: make it possible to disable this feature?
-  renderUnreadMessages() {
-    const {
-      newMessagesNotificationText = 'View new messages',
-      isMobile = false,
-    } = this.props;
-    const unread = this.getUnreadMessages();
-
-    if (unread.length === 0) {
-      return null;
-    }
-
-    // If the total number of characters in the previewed messages is more
-    // than one hundred (100), only show the first message (rather than two)
-    const chars = unread.reduce((acc, msg) => acc + msg.body.length, 0);
-    const displayed = chars > 100 ? unread.slice(0, 1) : unread;
-
-    return (
-      <Flex
-        className={isMobile ? 'Mobile' : ''}
-        sx={{
-          bg: 'transparent',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          height: '100%',
-          width: '100%',
-          flex: 1,
-        }}
-      >
-        {displayed.map((msg, key) => {
-          return (
-            <motion.div
-              key={key}
-              initial={{opacity: 0, x: -2}}
-              animate={{opacity: 1, x: 0}}
-              transition={{duration: 0.2, ease: 'easeIn'}}
-            >
-              <PopupChatMessage key={key} message={msg} />
-            </motion.div>
-          );
-        })}
-
-        <Flex mt={2} pr={2} sx={{justifyContent: 'flex-end'}}>
-          <Link onClick={this.emitOpenWindow}>
-            {newMessagesNotificationText}
-          </Link>
-        </Flex>
-      </Flex>
-    );
-  }
-
   render() {
     const {
       title = 'Welcome!',
@@ -1031,6 +896,7 @@ class ChatWindow extends React.Component<Props, State> {
       emailInputPlaceholder = 'Enter your email',
       agentAvailableText = "We're online right now!",
       agentUnavailableText = "We're away at the moment.",
+      newMessagesNotificationText = 'View new messages',
       companyName,
       isMobile = false,
       isCloseable = true,
@@ -1051,7 +917,13 @@ class ChatWindow extends React.Component<Props, State> {
     } = this.state;
 
     if (isGameMode) {
-      return this.renderEmbeddedGame();
+      return (
+        <EmbeddedGame
+          isMobile={isMobile}
+          onLoadGame={this.handleGameLoaded}
+          onLeaveGame={this.handleLeaveGameMode}
+        />
+      );
     }
 
     if (isTransitioning) {
@@ -1059,7 +931,14 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     if (!isOpen && shouldDisplayNotifications) {
-      return this.renderUnreadMessages();
+      return (
+        <UnreadMessages
+          messages={this.getUnreadMessages()}
+          newMessagesNotificationText={newMessagesNotificationText}
+          isMobile={isMobile}
+          onOpen={this.emitOpenWindow}
+        />
+      );
     }
 
     // FIXME: only return null for versions of the chat-widget after v1.1.0
@@ -1069,6 +948,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     const shouldAskForEmail = this.askForEmailUpfront();
     const hasAvailableAgents = availableAgents.length > 0;
+    const replies = this.getQuickReplies(messages);
 
     return (
       <Flex
@@ -1149,12 +1029,18 @@ class ChatWindow extends React.Component<Props, State> {
             );
           })}
 
-          {this.renderQuickReplies()}
+          {replies && replies.length > 0 ? (
+            <QuickReplies
+              replies={replies}
+              onSelect={this.handleSelectQuickReply}
+            />
+          ) : null}
 
           <div ref={(el) => (this.scrollToEl = el)} />
         </Box>
 
         {shouldDisplayBranding && <PapercupsBranding />}
+
         <Box
           px={2}
           sx={{
@@ -1178,6 +1064,7 @@ class ChatWindow extends React.Component<Props, State> {
             onSendMessage={this.handleSendMessage}
           />
         </Box>
+
         <img
           alt="Papercups"
           src="https://papercups.s3.us-east-2.amazonaws.com/papercups-logo.svg"
