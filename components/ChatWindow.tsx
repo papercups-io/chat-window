@@ -812,14 +812,10 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   isOnDeprecatedVersion = (): boolean => {
-    const {accountId, version = '1.0.0'} = this.props;
+    const {version = '1.0.0'} = this.props;
+    const [major, minor, patch] = version.split('.').map((n) => Number(n) || 0);
 
-    // TODO: remove after testing
-    if (accountId === '873f5102-d267-4b09-9de0-d6e741e0e076') {
-      return false;
-    }
-
-    return version < '1.1.2';
+    return major <= 1 && minor <= 1 && patch <= 2;
   };
 
   handleSelectQuickReply = ({text, action}: QuickReply) => {
