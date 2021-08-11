@@ -53,6 +53,7 @@ type Props = {
   isCloseable?: boolean;
   debug?: boolean;
   version?: string;
+  ts?: string;
 };
 
 type State = {
@@ -108,6 +109,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer: metadata,
       debug: debugModeEnabled,
       disableAnalyticsTracking = false,
+      ts = null,
     } = this.props;
 
     this.logger = new Logger(debugModeEnabled);
@@ -141,7 +143,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     await this.fetchLatestConversation(customerId, metadata);
 
-    this.emit('chat:loaded');
+    this.emit('chat:loaded', {ts});
 
     if (this.isOnDeprecatedVersion()) {
       console.warn('You are currently on a deprecated version of Papercups.');

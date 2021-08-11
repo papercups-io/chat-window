@@ -2,7 +2,6 @@ import React from 'react';
 import {ThemeProvider} from 'theme-ui';
 import ChatWindow from './ChatWindow';
 import {CustomerMetadata} from '../helpers/types';
-import {isDev} from '../helpers/config';
 import {setupPostMessageHandlers} from '../helpers/utils';
 import getThemeConfig from '../helpers/theme';
 import Logger from '../helpers/logger';
@@ -31,6 +30,7 @@ type Config = {
   mobile?: boolean;
   metadata?: string; // stringified CustomerMetadata JSON
   version?: string;
+  ts?: string;
 };
 
 const parseCustomerMetadata = (str: string): CustomerMetadata => {
@@ -167,6 +167,7 @@ class Wrapper extends React.Component<Props, State> {
       mobile = '0',
       metadata = '{}',
       version = '1.0.0',
+      ts,
     } = config;
 
     const theme = getThemeConfig({primary: primaryColor});
@@ -196,6 +197,7 @@ class Wrapper extends React.Component<Props, State> {
           baseUrl={baseUrl}
           customer={customer}
           version={version}
+          ts={ts}
         />
       </ThemeProvider>
     );
