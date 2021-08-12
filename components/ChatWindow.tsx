@@ -338,6 +338,12 @@ class ChatWindow extends React.Component<Props, State> {
     const isOutsideWorkingHours = settings.account?.is_outside_working_hours;
     const shouldDisplayAwayMessage =
       hasAwayMessage && isOutsideWorkingHours && !hasAvailableAgents;
+    const body = shouldDisplayAwayMessage ? awayMessage : greeting;
+    const hasValidMessage = body && body.trim().length > 0;
+
+    if (!hasValidMessage) {
+      return [];
+    }
 
     return [
       {
