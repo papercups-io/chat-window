@@ -53,6 +53,7 @@ type Props = {
   isCloseable?: boolean;
   debug?: boolean;
   version?: string;
+  ts?: string;
 };
 
 type State = {
@@ -108,6 +109,7 @@ class ChatWindow extends React.Component<Props, State> {
       customer: metadata,
       debug: debugModeEnabled,
       disableAnalyticsTracking = false,
+      ts = null,
     } = this.props;
 
     this.logger = new Logger(debugModeEnabled);
@@ -158,7 +160,8 @@ class ChatWindow extends React.Component<Props, State> {
     });
   }
 
-  emit = (event: string, payload?: any) => {
+  emit = (event: string, data = {}) => {
+    const payload = {...data, ts: this.props.ts};
     this.logger.debug('Sending event from iframe:', {event, payload});
 
     parent.postMessage({event, payload}, '*'); // TODO: remove?
@@ -613,12 +616,13 @@ class ChatWindow extends React.Component<Props, State> {
       .join()
       .receive('ok', (res: any) => {
         this.logger.debug('Joined conversation successfully!', res);
+
+        this.emit('conversation:join', {conversationId, customerId});
       })
       .receive('error', (err: any) => {
         this.logger.debug('Unable to join conversation!', err);
       });
 
-    this.emit('conversation:join', {conversationId, customerId});
     this.scrollIntoView();
   };
 
