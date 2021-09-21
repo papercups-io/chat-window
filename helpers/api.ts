@@ -51,18 +51,16 @@ export const updateCustomerMetadata = async (
 };
 
 export const createNewConversation = async (
-  accountId: string,
-  customerId: string,
+  params: {
+    account_id: string;
+    customer_id: string;
+    inbox_id?: string;
+  },
   baseUrl = DEFAULT_BASE_URL
 ) => {
   return request
     .post(`${baseUrl}/api/conversations`)
-    .send({
-      conversation: {
-        account_id: accountId,
-        customer_id: customerId,
-      },
-    })
+    .send({conversation: params})
     .then((res) => res.body.data);
 };
 
@@ -79,23 +77,25 @@ export const findCustomerByExternalId = async (
 };
 
 export const fetchCustomerConversations = async (
-  customerId: string,
-  accountId: string,
+  query: {
+    customer_id: string;
+    account_id: string;
+  },
   baseUrl = DEFAULT_BASE_URL
 ) => {
   return request
     .get(`${baseUrl}/api/conversations/customer`)
-    .query({customer_id: customerId, account_id: accountId})
+    .query(query)
     .then((res) => res.body.data);
 };
 
 export const fetchWidgetSettings = async (
-  accountId: string,
+  query: {account_id: string; inbox_id?: string},
   baseUrl = DEFAULT_BASE_URL
 ): Promise<WidgetSettings> => {
   return request
     .get(`${baseUrl}/api/widget_settings`)
-    .query({account_id: accountId})
+    .query(query)
     .then((res) => res.body.data);
 };
 

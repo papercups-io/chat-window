@@ -32,6 +32,7 @@ import UnreadMessages from './UnreadMessages';
 import QuickReplies from './QuickReplies';
 
 type Props = {
+  inboxId?: string;
   accountId: string;
   customerId?: string;
   title?: string;
@@ -105,6 +106,7 @@ class ChatWindow extends React.Component<Props, State> {
     const {
       baseUrl,
       accountId,
+      inboxId,
       customerId: cachedCustomerId,
       customer: metadata,
       debug: debugModeEnabled,
@@ -136,7 +138,9 @@ class ChatWindow extends React.Component<Props, State> {
 
     const websocketUrl = getWebsocketUrl(baseUrl);
 
-    this.socket = new Socket(websocketUrl, {params: {account_id: accountId}});
+    this.socket = new Socket(websocketUrl, {
+      params: {account_id: accountId, inbox_id: inboxId},
+    });
     this.socket.connect();
 
     this.listenForAgentAvailability();
@@ -215,10 +219,11 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   fetchWidgetSettings = async (): Promise<WidgetSettings> => {
-    const {accountId, baseUrl} = this.props;
+    const {accountId, inboxId, baseUrl} = this.props;
+    const params = {account_id: accountId, inbox_id: inboxId};
     const empty = {} as WidgetSettings;
 
-    return API.fetchWidgetSettings(accountId, baseUrl)
+    return API.fetchWidgetSettings(params, baseUrl)
       .then((settings) => settings || empty)
       .catch(() => empty);
   };
@@ -456,14 +461,18 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    const {accountId, baseUrl} = this.props;
+    const {accountId, inboxId, baseUrl} = this.props;
 
     this.logger.debug('Fetching conversations for customer:', customerId);
 
     try {
+      const params = {
+        customer_id: customerId,
+        account_id: accountId,
+        inbox_id: inboxId,
+      };
       const conversations = await API.fetchCustomerConversations(
-        customerId,
-        accountId,
+        params,
         baseUrl
       );
 
@@ -584,15 +593,19 @@ class ChatWindow extends React.Component<Props, State> {
     existingCustomerId?: string,
     email?: string
   ) => {
-    const {accountId, baseUrl} = this.props;
+    const {accountId, inboxId, baseUrl} = this.props;
     const customerId = await this.createOrUpdateCustomer(
       accountId,
       existingCustomerId,
       email
     );
+    const params = {
+      account_id: accountId,
+      customer_id: customerId,
+      inbox_id: inboxId,
+    };
     const {id: conversationId} = await API.createNewConversation(
-      accountId,
-      customerId,
+      params,
       baseUrl
     );
 

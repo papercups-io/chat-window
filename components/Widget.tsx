@@ -7,10 +7,13 @@ import getThemeConfig from '../helpers/theme';
 import Logger from '../helpers/logger';
 
 type Config = {
+  token?: string;
+  inbox?: string;
+  // TODO: deprecate
+  accountId?: string;
   title?: string;
   subtitle?: string;
   primaryColor?: string;
-  accountId?: string;
   baseUrl?: string;
   greeting?: string;
   awayMessage?: string;
@@ -47,6 +50,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
   }
 
   const {
+    token,
+    inbox,
     accountId,
     title,
     subtitle,
@@ -68,6 +73,8 @@ const sanitizeConfigPayload = (payload: any): Config => {
   } = payload;
 
   return {
+    token,
+    inbox,
     accountId,
     title,
     subtitle,
@@ -145,6 +152,8 @@ class Wrapper extends React.Component<Props, State> {
     }
 
     const {
+      token,
+      inbox,
       accountId,
       customerId,
       greeting,
@@ -176,10 +185,11 @@ class Wrapper extends React.Component<Props, State> {
     return (
       <ThemeProvider theme={theme}>
         <ChatWindow
+          accountId={token || accountId}
+          inboxId={inbox}
+          customerId={customerId}
           title={title}
           subtitle={subtitle}
-          accountId={accountId}
-          customerId={customerId}
           greeting={greeting}
           awayMessage={awayMessage}
           companyName={companyName}
