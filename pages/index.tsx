@@ -5,6 +5,7 @@ import Widget from '../components/Widget';
 
 export default function Home() {
   const {query} = useRouter();
+  const token = query.token || query.accountId;
 
   return (
     <>
@@ -15,7 +16,7 @@ export default function Home() {
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
-      {query.accountId ? <Widget config={query} /> : null}
+      {token ? <Widget config={query} /> : null}
     </>
   );
 }
