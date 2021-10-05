@@ -20,7 +20,7 @@
     ]
   },
   "dependencies": {
-    "@papercups-io/browser": "0.0.1",
+    "@papercups-io/browser": "0.0.3-beta.0",
     "@sentry/react": "^6.5.1",
     "antd": "^4.4.2",
     "dayjs": "^1.10.6",
