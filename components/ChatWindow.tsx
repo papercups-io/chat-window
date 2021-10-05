@@ -398,6 +398,10 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   handleSendMessage = async (message: Partial<Message>, email?: string) => {
+    if (this.state.isSending) {
+      return;
+    }
+
     const {body = ''} = message;
 
     if (shouldActivateGameMode(body)) {
