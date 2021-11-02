@@ -171,15 +171,10 @@ class ChatWindow extends React.Component<Props, State> {
     this.logger.debug('Handling in iframe:', msg.data);
 
     switch (event) {
+      case 'customer:set:id':
+        return this.papercups.setCustomerId(payload);
       case 'customer:update':
-        const {customerId, metadata = {}} = payload;
-        const {email = null, external_id: externalId = null} = metadata;
-        const ts = this.props.ts || String(+new Date());
-        const identifier = externalId || email || ts;
-
-        return customerId
-          ? this.papercups.updateCustomerMetadata(customerId, metadata)
-          : this.papercups.identify(identifier, metadata);
+        return this.handleCustomerUpdated(payload);
       case 'notifications:display':
         return this.handleDisplayNotifications(payload);
       case 'papercups:toggle':
@@ -191,6 +186,17 @@ class ChatWindow extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  handleCustomerUpdated = (payload: any) => {
+    const {customerId, metadata = {}} = payload;
+    const {email = null, external_id: externalId = null} = metadata;
+    const ts = this.props.ts || String(+new Date());
+    const identifier = externalId || email || ts;
+
+    return customerId
+      ? this.papercups.updateCustomerMetadata(customerId, metadata)
+      : this.papercups.identify(identifier, metadata);
   };
 
   handleDisplayNotifications = (payload: any) => {
