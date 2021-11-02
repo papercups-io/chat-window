@@ -172,9 +172,14 @@ class ChatWindow extends React.Component<Props, State> {
 
     switch (event) {
       case 'customer:update':
-        const {customerId, metadata} = payload;
+        const {customerId, metadata = {}} = payload;
+        const {email = null, external_id: externalId = null} = metadata;
+        const ts = this.props.ts || String(+new Date());
+        const identifier = externalId || email || ts;
 
-        return this.papercups.updateExistingCustomer(customerId, metadata);
+        return customerId
+          ? this.papercups.updateCustomerMetadata(customerId, metadata)
+          : this.papercups.identify(identifier, metadata);
       case 'notifications:display':
         return this.handleDisplayNotifications(payload);
       case 'papercups:toggle':
