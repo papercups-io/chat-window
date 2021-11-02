@@ -49,51 +49,37 @@ const sanitizeConfigPayload = (payload: any): Config => {
     return {};
   }
 
-  const {
-    token,
-    inbox,
-    accountId,
-    title,
-    subtitle,
-    primaryColor,
-    baseUrl,
-    greeting,
-    awayMessage,
-    companyName,
-    newMessagePlaceholder,
-    emailInputPlaceholder,
-    newMessagesNotificationText,
-    agentAvailableText,
-    agentUnavailableText,
-    showAgentAvailability,
-    disableAnalyticsTracking,
-    closeable,
-    debug,
-    version,
-  } = payload;
+  const valid = [
+    'token',
+    'inbox',
+    'accountId',
+    'title',
+    'subtitle',
+    'primaryColor',
+    'baseUrl',
+    'greeting',
+    'awayMessage',
+    'companyName',
+    'requireEmailUpfront',
+    'newMessagePlaceholder',
+    'emailInputPlaceholder',
+    'newMessagesNotificationText',
+    'agentAvailableText',
+    'agentUnavailableText',
+    'showAgentAvailability',
+    'disableAnalyticsTracking',
+    'closeable',
+    'debug',
+    'version',
+  ];
 
-  return {
-    token,
-    inbox,
-    accountId,
-    title,
-    subtitle,
-    primaryColor,
-    baseUrl,
-    greeting,
-    awayMessage,
-    companyName,
-    newMessagePlaceholder,
-    emailInputPlaceholder,
-    newMessagesNotificationText,
-    agentAvailableText,
-    agentUnavailableText,
-    showAgentAvailability,
-    disableAnalyticsTracking,
-    closeable,
-    debug,
-    version,
-  };
+  return valid.reduce((acc, key) => {
+    if (typeof payload[key] !== 'undefined') {
+      return {...acc, [key]: payload[key]};
+    } else {
+      return acc;
+    }
+  }, {} as Config);
 };
 
 type Props = {config: Config};

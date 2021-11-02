@@ -172,7 +172,9 @@ class ChatWindow extends React.Component<Props, State> {
 
     switch (event) {
       case 'customer:set:id':
-        return this.papercups.setCustomerId(payload);
+        return this.papercups
+          .setCustomerId(payload)
+          .fetchLatestConversation(payload);
       case 'customer:update':
         return this.handleCustomerUpdated(payload);
       case 'notifications:display':
