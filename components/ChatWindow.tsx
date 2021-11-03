@@ -1,13 +1,17 @@
 import React from 'react';
 import {Box, Flex, Heading, Text} from 'theme-ui';
-import {Socket, Presence} from 'phoenix';
+import {Presence} from 'phoenix';
 import {motion} from 'framer-motion';
+import {
+  Papercups,
+  isCustomerMessage,
+  isAgentMessage,
+} from '@papercups-io/browser';
 import ChatMessage from './ChatMessage';
 import ChatFooter from './ChatFooter';
 import AgentAvailability from './AgentAvailability';
 import PapercupsBranding from './PapercupsBranding';
 import CloseIcon from './CloseIcon';
-import * as API from '../helpers/api';
 import {
   shorten,
   shouldActivateGameMode,
@@ -19,14 +23,12 @@ import {
   WidgetSettings,
   QuickReply,
 } from '../helpers/types';
-import {getWebsocketUrl} from '../helpers/config';
 import Logger from '../helpers/logger';
 import {
   isWindowHidden,
   addVisibilityEventListener,
 } from '../helpers/visibility';
 import analytics from '../helpers/analytics';
-import EmailForm from './EmailForm';
 import EmbeddedGame from './EmbeddedGame';
 import UnreadMessages from './UnreadMessages';
 import QuickReplies from './QuickReplies';
@@ -74,14 +76,49 @@ type State = {
 
 class ChatWindow extends React.Component<Props, State> {
   scrollToEl: any = null;
-
   subscriptions: Array<() => void> = [];
-  socket: any;
-  channel: any;
   logger: Logger;
+  papercups: Papercups;
 
   constructor(props: Props) {
     super(props);
+
+    const {debug: debugModeEnabled, disableAnalyticsTracking = false} = props;
+
+    this.logger = new Logger(debugModeEnabled);
+
+    if (!disableAnalyticsTracking) {
+      this.logger.debug('Initializing analytics...');
+      // Just initializes Sentry for error monitoring if available
+      analytics.init();
+    } else {
+      this.logger.debug('Analytics disabled.');
+    }
+
+    const win = window as any;
+    const doc = (document || win.document) as any;
+
+    this.papercups = Papercups.init({
+      customerId: props.customerId,
+      accountId: props.accountId,
+      inboxId: props.inboxId,
+      baseUrl: props.baseUrl,
+      customer: props.customer,
+      debug: debugModeEnabled,
+      setInitialMessage: this.getDefaultGreeting,
+      onPresenceSync: this.onPresenceSync,
+      onSetCustomerId: this.onSetCustomerId,
+      onSetConversationId: this.onSetConversationId,
+      onSetWidgetSettings: this.onWidgetSettingsLoaded,
+      onMessagesUpdated: this.onMessagesUpdated,
+      onConversationCreated: this.onConversationCreated,
+      onMessageCreated: this.handleNewMessage,
+    });
+
+    this.subscriptions = [
+      setupPostMessageHandlers(win, this.postMessageHandlers),
+      addVisibilityEventListener(doc, this.handleVisibilityChange),
+    ];
 
     this.state = {
       messages: [],
@@ -103,49 +140,7 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
-    const {
-      baseUrl,
-      accountId,
-      inboxId,
-      customerId: cachedCustomerId,
-      customer: metadata,
-      debug: debugModeEnabled,
-      disableAnalyticsTracking = false,
-      ts = null,
-    } = this.props;
-
-    this.logger = new Logger(debugModeEnabled);
-
-    if (!disableAnalyticsTracking) {
-      this.logger.debug('Initializing analytics...');
-      analytics.init();
-    } else {
-      this.logger.debug('Analytics disabled.');
-    }
-
-    const win = window as any;
-    const doc = (document || win.document) as any;
-
-    const isValidCustomer = await this.isValidCustomer(cachedCustomerId);
-    const customerId = isValidCustomer ? cachedCustomerId : null;
-    const settings = await this.fetchWidgetSettings();
-
-    this.setState({customerId, settings});
-    this.subscriptions = [
-      setupPostMessageHandlers(win, this.postMessageHandlers),
-      addVisibilityEventListener(doc, this.handleVisibilityChange),
-    ];
-
-    const websocketUrl = getWebsocketUrl(baseUrl);
-
-    this.socket = new Socket(websocketUrl, {
-      params: {account_id: accountId, inbox_id: inboxId},
-    });
-    this.socket.connect();
-
-    this.listenForAgentAvailability();
-
-    await this.fetchLatestConversation(customerId, metadata);
+    await this.papercups.start();
 
     this.emit('chat:loaded');
 
@@ -156,7 +151,7 @@ class ChatWindow extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
-    this.channel && this.channel.leave();
+    this.papercups.disconnect();
     this.subscriptions.forEach((unsubscribe) => {
       if (typeof unsubscribe === 'function') {
         unsubscribe();
@@ -176,10 +171,12 @@ class ChatWindow extends React.Component<Props, State> {
     this.logger.debug('Handling in iframe:', msg.data);
 
     switch (event) {
+      case 'customer:set:id':
+        return this.papercups
+          .setCustomerId(payload)
+          .fetchLatestConversation(payload);
       case 'customer:update':
-        const {customerId, metadata} = payload;
-
-        return this.updateExistingCustomer(customerId, metadata);
+        return this.handleCustomerUpdated(payload);
       case 'notifications:display':
         return this.handleDisplayNotifications(payload);
       case 'papercups:toggle':
@@ -191,6 +188,17 @@ class ChatWindow extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  handleCustomerUpdated = (payload: any) => {
+    const {customerId, metadata = {}} = payload;
+    const {email = null, external_id: externalId = null} = metadata;
+    const ts = this.props.ts || String(+new Date());
+    const identifier = externalId || email || ts;
+
+    return customerId
+      ? this.papercups.updateCustomerMetadata(customerId, metadata)
+      : this.papercups.identify(identifier, metadata);
   };
 
   handleDisplayNotifications = (payload: any) => {
@@ -218,70 +226,58 @@ class ChatWindow extends React.Component<Props, State> {
     );
   };
 
-  fetchWidgetSettings = async (): Promise<WidgetSettings> => {
-    const {accountId, inboxId, baseUrl} = this.props;
-    const params = {account_id: accountId, inbox_id: inboxId};
-    const empty = {} as WidgetSettings;
-
-    return API.fetchWidgetSettings(params, baseUrl)
-      .then((settings) => settings || empty)
-      .catch(() => empty);
+  onWidgetSettingsLoaded = (settings: WidgetSettings) => {
+    this.setState({settings});
   };
 
-  listenForNewConversations = (customerId: string) => {
-    const {customer: metadata} = this.props;
+  onSetCustomerId = (customerId: string) => {
+    this.logger.debug('Setting customer ID:', customerId);
 
-    const channel = this.socket.channel(`conversation:lobby:${customerId}`, {});
-
-    channel.on('conversation:created', (payload: any) => {
-      console.debug('Conversation created!', payload);
-      // TODO: clean this up a bit?
-      // TODO: remove timeout when issue is fixed
-      setTimeout(
-        () => this.fetchLatestConversation(customerId, metadata),
-        1000
-      );
-    });
-
-    channel
-      .join()
-      .receive('ok', (res: any) => {
-        this.logger.debug('Successfully listening for new conversations!', res);
-      })
-      .receive('error', (err: any) => {
-        this.logger.debug('Unable to listen for new conversations!', err);
-      });
+    if (customerId !== this.state.customerId) {
+      this.setState({customerId});
+      this.emit('customer:updated', {customerId});
+    }
   };
 
-  listenForAgentAvailability = () => {
-    const {accountId} = this.props;
-    const room = this.socket.channel(`room:${accountId}`, {});
-
-    room
-      .join()
-      .receive('ok', (res: any) => {
-        this.logger.debug('Joined room successfully!', res);
-      })
-      .receive('error', (err: any) => {
-        this.logger.debug('Unable to join room!', err);
-      });
-
-    const presence = new Presence(room);
-
-    presence.onSync(() => {
-      this.logger.debug('Syncing presence:', presence.list());
-
-      this.setState({
-        availableAgents: presence
-          .list()
-          .map(({metas}) => {
-            const [info] = metas;
-
-            return info;
-          })
-          .filter((info) => !!info.user_id),
-      });
+  onSetConversationId = (conversationId: string) => {
+    this.setState({conversationId});
+    this.emit('conversation:join', {
+      conversationId,
+      customerId: this.state.customerId,
     });
+  };
+
+  onConversationCreated = (customerId: string, data: any) => {
+    this.logger.debug('Handling conversation created:', data);
+  };
+
+  onPresenceSync = (presence: Presence) => {
+    this.logger.debug('Syncing presence:', presence.list());
+
+    this.setState({
+      availableAgents: presence
+        .list()
+        .map(({metas}) => {
+          const [info] = metas;
+
+          return info;
+        })
+        .filter((info) => !!info.user_id),
+    });
+  };
+
+  onMessagesUpdated = (messages: Array<Message>) => {
+    this.setState({messages}, () => this.scrollIntoView());
+
+    const unseenMessages = messages.filter(
+      (msg: Message) => !msg.seen_at && !!msg.user_id
+    );
+
+    if (unseenMessages.length > 0) {
+      const [firstUnseenMessage] = unseenMessages;
+
+      this.emitUnseenMessage(firstUnseenMessage);
+    }
   };
 
   scrollIntoView = () => {
@@ -361,301 +357,6 @@ class ChatWindow extends React.Component<Props, State> {
     ];
   };
 
-  isValidUuid = (id: string) => {
-    if (!id || !id.length) {
-      return false;
-    }
-
-    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    return regex.test(id);
-  };
-
-  isValidCustomer = async (customerId?: string | null) => {
-    if (!customerId || !customerId.length) {
-      return false;
-    }
-
-    if (!this.isValidUuid(customerId)) {
-      return false;
-    }
-
-    const {baseUrl, accountId} = this.props;
-
-    try {
-      const isValidCustomer = await API.isValidCustomer(
-        customerId,
-        accountId,
-        baseUrl
-      );
-
-      return isValidCustomer;
-    } catch (err) {
-      this.logger.warn('Failed to validate customer ID.');
-      this.logger.warn('You might be on an older version of Papercups.');
-      // Return true for backwards compatibility
-      return true;
-    }
-  };
-
-  // Check if we have a matching customer based on the `external_id` provided
-  // in the customer metadata. Otherwise, fallback to the cached customer id.
-  checkForExistingCustomer = async (
-    metadata?: CustomerMetadata,
-    defaultCustomerId?: string | null
-  ): Promise<string | null> => {
-    if (!metadata || !metadata?.external_id) {
-      this.setState({customerId: defaultCustomerId});
-
-      return defaultCustomerId;
-    }
-
-    const {accountId, baseUrl} = this.props;
-    // NB: we check for matching existing customers based on external_id, email,
-    // and host -- this may break across subdomains, but I think this is fine for now.
-    const {email, host, external_id: externalId} = metadata;
-    const filters = {email, host};
-    const {
-      customer_id: matchingCustomerId,
-    } = await API.findCustomerByExternalId(
-      externalId,
-      accountId,
-      filters,
-      baseUrl
-    );
-
-    if (!matchingCustomerId) {
-      this.setState({customerId: null});
-
-      return null;
-    } else if (matchingCustomerId === defaultCustomerId) {
-      this.setState({customerId: defaultCustomerId});
-
-      return defaultCustomerId;
-    } else {
-      this.setState({customerId: matchingCustomerId});
-      // Emit update so we can cache the ID in the parent window
-      this.emit('customer:updated', {customerId: matchingCustomerId});
-
-      return matchingCustomerId;
-    }
-  };
-
-  // Check if we've seen this customer before; if we have, try to fetch
-  // the latest existing conversation for that customer. Otherwise, we wait
-  // until the customer initiates the first message to create the conversation.
-  fetchLatestConversation = async (
-    cachedCustomerId?: string | null,
-    metadata?: CustomerMetadata
-  ) => {
-    const customerId = await this.checkForExistingCustomer(
-      metadata,
-      cachedCustomerId
-    );
-
-    if (!customerId) {
-      // If there's no customerId, we haven't seen this customer before,
-      // so do nothing until they try to create a new message
-      this.setState({messages: [...this.getDefaultGreeting()]});
-
-      return;
-    }
-
-    const {accountId, inboxId, baseUrl} = this.props;
-
-    this.logger.debug('Fetching conversations for customer:', customerId);
-
-    try {
-      const params = {
-        customer_id: customerId,
-        account_id: accountId,
-        inbox_id: inboxId,
-      };
-      const conversations = await API.fetchCustomerConversations(
-        params,
-        baseUrl
-      );
-
-      this.logger.debug('Found existing conversations:', conversations);
-
-      if (!conversations || !conversations.length) {
-        // If there are no conversations yet, wait until the customer creates
-        // a new message to create the new conversation
-        this.setState({messages: [...this.getDefaultGreeting()]});
-        this.listenForNewConversations(customerId);
-
-        return;
-      }
-
-      const [latest] = conversations;
-      const {id: conversationId, messages = []} = latest;
-      const formattedMessages = messages.sort(
-        (a: Message, b: Message) =>
-          +new Date(a.created_at) - +new Date(b.created_at)
-      );
-      const [initialMessage] = formattedMessages;
-      const initialMessageCreatedAt = initialMessage?.created_at;
-
-      this.setState({
-        conversationId,
-        messages: [
-          ...this.getDefaultGreeting({
-            created_at: initialMessageCreatedAt,
-            seen_at: initialMessageCreatedAt,
-          }),
-          ...formattedMessages,
-        ],
-      });
-
-      this.joinConversationChannel(conversationId, customerId);
-
-      await this.updateExistingCustomer(customerId, metadata);
-
-      const unseenMessages = formattedMessages.filter(
-        (msg: Message) => !msg.seen_at && !!msg.user_id
-      );
-
-      if (unseenMessages.length > 0) {
-        const [firstUnseenMessage] = unseenMessages;
-
-        this.emitUnseenMessage(firstUnseenMessage);
-      }
-    } catch (err) {
-      this.logger.debug('Error fetching conversations!', err);
-    }
-  };
-
-  createOrUpdateCustomer = async (
-    accountId: string,
-    existingCustomerId?: string,
-    email?: string
-  ): Promise<string> => {
-    const {baseUrl, customer} = this.props;
-    const metadata = email ? {...customer, email} : customer;
-
-    try {
-      const customer = existingCustomerId
-        ? await API.updateCustomerMetadata(
-            existingCustomerId,
-            metadata,
-            baseUrl
-          )
-        : await API.createNewCustomer(accountId, metadata, baseUrl);
-      const {id: customerId, email} = customer;
-      analytics.identify(customerId, email);
-
-      if (!existingCustomerId) {
-        this.emit('customer:created', {customerId});
-      }
-
-      return customerId;
-    } catch (err) {
-      // TODO: this edge case may occur if the cached customer ID somehow
-      // gets messed up (e.g. between dev and prod environments). The long term
-      // fix should be changing the cache key for different environments.
-      this.logger.error('Failed to update or create customer:', err);
-      this.logger.error('Retrying...');
-
-      const customer = await API.createNewCustomer(
-        accountId,
-        metadata,
-        baseUrl
-      );
-      const {id: customerId, email} = customer;
-      analytics.identify(customerId, email);
-
-      this.emit('customer:created', {customerId});
-
-      return customerId;
-    }
-  };
-
-  // Updates the customer with metadata fields like `name`, `email`, `external_id`
-  // to make it easier to identify customers in the dashboard.
-  updateExistingCustomer = async (
-    customerId: string,
-    metadata?: CustomerMetadata
-  ) => {
-    if (!metadata) {
-      return;
-    }
-
-    try {
-      const {baseUrl} = this.props;
-
-      await API.updateCustomerMetadata(customerId, metadata, baseUrl);
-    } catch (err) {
-      this.logger.debug('Error updating customer metadata!', err);
-    }
-  };
-
-  initializeNewConversation = async (
-    existingCustomerId?: string,
-    email?: string
-  ) => {
-    const {accountId, inboxId, baseUrl} = this.props;
-    const customerId = await this.createOrUpdateCustomer(
-      accountId,
-      existingCustomerId,
-      email
-    );
-    const params = {
-      account_id: accountId,
-      customer_id: customerId,
-      inbox_id: inboxId,
-    };
-    const {id: conversationId} = await API.createNewConversation(
-      params,
-      baseUrl
-    );
-
-    this.setState({customerId, conversationId});
-    this.joinConversationChannel(conversationId, customerId);
-
-    return {customerId, conversationId};
-  };
-
-  joinConversationChannel = (conversationId: string, customerId?: string) => {
-    if (this.channel && this.channel.leave) {
-      this.channel.leave(); // TODO: what's the best practice here?
-    }
-
-    this.logger.debug('Joining channel:', conversationId);
-
-    this.channel = this.socket.channel(`conversation:${conversationId}`, {
-      customer_id: customerId,
-    });
-
-    // TODO: deprecate 'shout' event in favor of 'message:created'
-    this.channel.on('shout', (message: any) => {
-      this.setState({isGameMode: false}, () => this.handleNewMessage(message));
-    });
-
-    this.channel
-      .join()
-      .receive('ok', (res: any) => {
-        this.logger.debug('Joined conversation successfully!', res);
-
-        this.emit('conversation:join', {conversationId, customerId});
-      })
-      .receive('error', (err: any) => {
-        this.logger.debug('Unable to join conversation!', err);
-      });
-
-    this.scrollIntoView();
-  };
-
-  isCustomerMessage = (message: Message, customerId: string): boolean => {
-    return (
-      message.customer_id === customerId ||
-      (message.sent_at && message.type === 'customer')
-    );
-  };
-
-  areDatesEqual = (x: string, y: string) => {
-    return Math.floor(+new Date(x) / 1000) === Math.floor(+new Date(y) / 1000);
-  };
-
   emitUnseenMessage = (message: Message) => {
     this.emit('messages:unseen', {message});
   };
@@ -672,72 +373,49 @@ class ChatWindow extends React.Component<Props, State> {
   };
 
   handleNewMessage = (message: Message) => {
-    this.emit('message:received', message);
+    if (isAgentMessage(message)) {
+      this.emit('message:received', message);
+    } else {
+      this.emit('message:sent', message);
+    }
 
-    const {messages = []} = this.state;
-    const unsent = messages.find(
-      (m) =>
-        !m.created_at &&
-        this.areDatesEqual(m.sent_at, message.sent_at) &&
-        (m.body === message.body || (!m.body && !message.body))
-    );
-    const updated = unsent
-      ? messages.map((m) => (m.sent_at === unsent.sent_at ? message : m))
-      : [...messages, message];
-
-    this.setState({messages: updated}, () => {
-      this.scrollIntoView();
-
-      if (this.shouldMarkAsSeen(message)) {
-        this.markMessagesAsSeen();
-      } else if (!unsent) {
-        // If the message was not `unsent`, we know it came from the other end,
-        // in which case we should indicate that it hasn't been seen yet.
-        this.emitUnseenMessage(message);
-        this.playNotificationSound();
-      }
-    });
+    if (this.shouldMarkAsSeen(message)) {
+      this.markMessagesAsSeen();
+    } else if (isAgentMessage(message)) {
+      this.emitUnseenMessage(message);
+      this.playNotificationSound();
+    }
   };
 
   shouldMarkAsSeen = (message: Message) => {
     const {isOpen} = this.state;
-    const {user_id: agentId, seen_at: seenAt} = message;
-    const isAgentMessage = !!agentId || message.type === 'bot';
+    const {seen_at: seenAt} = message;
 
     // If already seen or the page is not visible, don't mark as seen
     if (seenAt || isWindowHidden(document)) {
       return false;
     }
 
-    return isAgentMessage && isOpen;
+    return isAgentMessage(message) && isOpen;
   };
 
   markMessagesAsSeen = () => {
-    const {customerId, conversationId, messages = []} = this.state;
+    const {customerId, conversationId} = this.state;
 
     this.logger.debug('Marking messages as seen!');
     this.emit('messages:seen', {});
-    this.setState({
-      messages: messages.map((msg) => {
-        return msg.seen_at ? msg : {...msg, seen_at: new Date().toISOString()};
-      }),
-    });
 
-    if (this.channel && customerId && conversationId) {
-      this.channel.push('messages:seen', {});
+    if (customerId && conversationId) {
+      this.papercups.markMessagesAsSeen();
     }
   };
 
   handleSendMessage = async (message: Partial<Message>, email?: string) => {
-    const {customerId, conversationId, isSending} = this.state;
-    const {body, file_ids = []} = message;
-    const isMissingBody = !body || body.trim().length === 0;
-    const isMissingAttachments = !file_ids || file_ids.length === 0;
-    const shouldSkipSending = isMissingBody && isMissingAttachments;
-
-    if (isSending || shouldSkipSending) {
+    if (this.state.isSending) {
       return;
     }
+
+    const {body = ''} = message;
 
     if (shouldActivateGameMode(body)) {
       this.setState({isGameMode: true});
@@ -745,49 +423,7 @@ class ChatWindow extends React.Component<Props, State> {
       return;
     }
 
-    const sentAt = new Date().toISOString();
-    // TODO: figure out how this should work if `customerId` is null
-    const payload: Message = {
-      ...message,
-      body,
-      customer_id: customerId,
-      type: 'customer',
-      sent_at: sentAt,
-    };
-
-    this.setState(
-      {
-        messages: [...this.state.messages, payload],
-      },
-      () => this.scrollIntoView()
-    );
-
-    if (!customerId || !conversationId) {
-      await this.initializeNewConversation(customerId, email);
-    }
-
-    // We should never hit this block, just adding to satisfy TypeScript
-    if (!this.channel) {
-      return;
-    }
-
-    // TODO: deprecate 'shout' event in favor of 'message:created'
-    this.channel.push('shout', {
-      ...message,
-      body,
-      customer_id: this.state.customerId,
-      sent_at: sentAt,
-    });
-
-    // TODO: should this only be emitted after the message is successfully sent?
-    this.emit('message:sent', {
-      ...message,
-      body,
-      type: 'customer',
-      sent_at: sentAt,
-      customer_id: this.state.customerId,
-      conversation_id: this.state.conversationId,
-    });
+    this.papercups.sendNewMessage(message, email);
   };
 
   // If this is true, we don't allow the customer to send any messages
@@ -806,7 +442,7 @@ class ChatWindow extends React.Component<Props, State> {
 
     // TODO: figure out what this actual logic should be...
     const previouslySentMessages = messages.find((msg) =>
-      this.isCustomerMessage(msg, customerId)
+      isCustomerMessage(msg, customerId)
     );
 
     return !previouslySentMessages;
@@ -857,10 +493,8 @@ class ChatWindow extends React.Component<Props, State> {
     }
 
     const message = messages[messages.length - 1];
-    const {user_id: agentId} = message;
-    const isAgentMessage = !!agentId || message.type === 'bot';
 
-    if (!isAgentMessage) {
+    if (!isAgentMessage(message)) {
       return [];
     }
 
@@ -895,7 +529,7 @@ class ChatWindow extends React.Component<Props, State> {
 
         // NB: `msg.type` doesn't come from the server, it's just a way to
         // help identify unsent messages in the frontend for now
-        const isMe = this.isCustomerMessage(msg, customerId);
+        const isMe = isCustomerMessage(msg, customerId);
 
         return !isMe;
       })
@@ -1027,7 +661,7 @@ class ChatWindow extends React.Component<Props, State> {
             const shouldDisplayTimestamp = key === messages.length - 1;
             // NB: `msg.type` doesn't come from the server, it's just a way to
             // help identify unsent messages in the frontend for now
-            const isMe = this.isCustomerMessage(msg, customerId);
+            const isMe = isCustomerMessage(msg, customerId);
 
             return (
               <motion.div
